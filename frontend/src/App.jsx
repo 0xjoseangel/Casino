@@ -1,49 +1,98 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import './App.css';
-import Torneos from './pages/torneos'; 
 
-// Componentes "Dummy" para que no de error mientras creáis los demás
-const Inicio = () => <div className="card"><h1>🎰 Bienvenido al Casino Lasaña</h1><p>Selecciona un módulo en el menú lateral.</p></div>;
-const Usuarios = () => <div className="card"><h2>👤 Gestión de Usuarios</h2><p>Aquí iría el componente de David.</p></div>;
-const Juegos = () => <div className="card"><h2>🎲 Catálogo de Juegos</h2><p>Aquí iría el componente de Minerva.</p></div>;
+// TUS PÁGINAS
+import Login from './pages/login';
+import TorneosAdmin from './pages/torneos'; // Tu página actual (Gestión)
+import TorneosJugador from './pages/torneosJugador'; // <--- NUEVA (Vista cliente)
+import Home from './pages/home';
 
 function App() {
+  const [rol, setRol] = useState(localStorage.getItem('casino_rol') || null);
+
+  // Si no hay rol, mostramos Login. Si hay rol, mostramos la App.
+  if (!rol) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="*" element={<Login setRol={setRol} />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+
   return (
     <BrowserRouter>
       <div className="app-container">
-        {/* BARRA LATERAL */}
-        <div className="sidebar">
-          <h1>♠️ Lasaña<br/>Casino</h1>
+        
+        {/* --- BARRA LATERAL (Cambia según el rol) --- */}
+        <div className="sidebar" style={{borderColor: rol === 'admin' ? '#d4af37' : '#00ff88'}}>
+          <h1 style={{color: rol === 'admin' ? '#d4af37' : '#00ff88'}}>
+            {rol === 'admin' ? 'PANEL ADMIN' : 'ZONA JUGADOR'}
+          </h1>
+          
           <nav>
-            <NavLink to="/">🏠 Inicio</NavLink>
-            <NavLink to="/usuarios">👤 Usuarios</NavLink>
-            <NavLink to="/juegos">🎲 Juegos</NavLink>
-            <NavLink to="/movimientos">💸 Movimientos</NavLink>
-            <NavLink to="/eventos">🏆 Torneos</NavLink>
-            <NavLink to="/sesiones">⏱️ Sesiones</NavLink>
+            {/* ENLACES COMUNES */}
+            <Link to="/dashboard" className="nav-link">🏠 Inicio</Link>
+
+            {/* MENÚ DE ADMINISTRADOR */}
+            {rol === 'admin' && (
+              <>
+                <div style={{opacity:0.5, marginTop:10, fontSize:12}}>GESTIÓN</div>
+                <Link to="/usuarios" className="nav-link">👤 Usuarios</Link>
+                <Link to="/eventos" className="nav-link">🏆 Torneos (Edit)</Link>
+                <Link to="/juegos" className="nav-link">🎰 Juegos</Link>
+                <Link to="/movimientos" className="nav-link">💸 Finanzas</Link>
+              </>
+            )}
+
+            {/* MENÚ DE JUGADOR */}
+            {rol === 'jugador' && (
+              <>
+                 <div style={{opacity:0.5, marginTop:10, fontSize:12}}>DIVERSIÓN</div>
+                 <Link to="/mis-torneos" className="nav-link">🏆 Torneos Disp.</Link>
+                 <Link to="/catalogo" className="nav-link">🎰 Jugar</Link>
+                 <Link to="/perfil" className="nav-link">👤 Mi Perfil</Link>
+              </>
+            )}
+
+            <button 
+              onClick={() => { setRol(null); localStorage.removeItem('casino_rol'); }}
+              style={{marginTop: 'auto', background: 'transparent', border:'1px solid #555', color:'white', width:'100%', padding:10, cursor:'pointer'}}
+            >
+              Cerrar Sesión
+            </button>
           </nav>
         </div>
 
-        {/* CONTENIDO PRINCIPAL */}
+        {/* --- CONTENIDO --- */}
         <div className="content">
           <Routes>
-            <Route path="/" element={<Inicio />} />
-            <Route path="/usuarios" element={<Usuarios />} />
-            <Route path="/juegos" element={<Juegos />} />
-            <Route path="/eventos" element={<Torneos />} /> {/* Aquí carga TU página */}
-            {/* Añadir el resto de rutas conforme existan */}
+            <Route path="/dashboard" element={<Home />} />
+            
+            {/* RUTAS DE ADMIN */}
+            {rol === 'admin' && (
+              <>
+                <Route path="/eventos" element={<TorneosAdmin />} />
+                {/* Aquí irían las rutas de tus compañeros (modo admin) */}
+              </>
+            )}
+
+            {/* RUTAS DE JUGADOR */}
+            {rol === 'jugador' && (
+              <>
+                <Route path="/mis-torneos" element={<TorneosJugador />} />
+                {/* Aquí irían las rutas de jugar */}
+              </>
+            )}
+
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </div>
       </div>
     </BrowserRouter>
   );
-}
-
-// Pequeño componente para detectar link activo
-function NavLink({ to, children }) {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-  return <Link to={to} className={`nav-link ${isActive ? 'active' : ''}`}>{children}</Link>;
 }
 
 export default App;
