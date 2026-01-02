@@ -12,39 +12,56 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             transaccion = serializer.save()
             usuario = transaccion.usuario
             
-            # --- LÓGICA CON CARTERA_MONETARIA ---
             if transaccion.tipo == 'DEPOSITO':
-                # Sumamos a la cartera
                 usuario.cartera_monetaria += transaccion.cantidad
             
             elif transaccion.tipo == 'RETIRO':
-                # Restamos de la cartera
                 usuario.cartera_monetaria -= transaccion.cantidad
             
             elif transaccion.tipo == 'TRANSFERENCIA':
-                # Restamos al origen
                 usuario.cartera_monetaria -= transaccion.cantidad
-                # Sumamos al destinatario
                 if transaccion.destinatario:
                     transaccion.destinatario.cartera_monetaria += transaccion.cantidad
                     transaccion.destinatario.save()
 
-            # Guardamos el cambio de saldo del usuario origen
             usuario.save()
-            
+
 class ApuestaViewSet(viewsets.ModelViewSet):
     queryset = Apuesta.objects.all().order_by('-fecha')
     serializer_class = ApuestaSerializer
 
+    # 1. AL CREAR LA APUESTA (Restamos el dinero apostado)
     def perform_create(self, serializer):
-        """
-        Al crear la apuesta, RESTAMOS el dinero automáticamente.
-        """
         with transaction.atomic():
-            # 1. Guardamos la apuesta
             apuesta = serializer.save()
-            
-            # 2. Cobramos la apuesta al jugador
             usuario = apuesta.usuario
+            
+            # Cobramos la entrada
             usuario.cartera_monetaria -= apuesta.cantidad_apostada
+            
+            # OJO: Si por lo que sea creas la apuesta ya ganada directamente (raro, pero posible)
+            if apuesta.ganancia > 0:
+                usuario.cartera_monetaria += apuesta.ganancia
+                
             usuario.save()
+
+    # 2. AL RESOLVER LA APUESTA (Sumamos si gana)
+    # Este método se activa cuando haces un PUT/PATCH para poner la ganancia
+    def perform_update(self, serializer):
+        with transaction.atomic():
+            # Recuperamos la apuesta antigua para comparar (evitar pagar doble si editas dos veces)
+            apuesta_antigua = self.get_object()
+            ganancia_anterior = apuesta_antigua.ganancia
+            
+            # Guardamos los nuevos datos
+            apuesta_nueva = serializer.save()
+            usuario = apuesta_nueva.usuario
+            
+            # Calculamos la diferencia de ganancia
+            # Si antes era 0 y ahora es 50, sumamos 50.
+            # Si nos equivocamos y corregimos de 50 a 60, sumamos solo los 10 extra.
+            diferencia_ganancia = apuesta_nueva.ganancia - ganancia_anterior
+            
+            if diferencia_ganancia != 0:
+                usuario.cartera_monetaria += diferencia_ganancia
+                usuario.save()
