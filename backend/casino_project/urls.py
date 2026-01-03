@@ -15,4 +15,7 @@ urlpatterns = [
     
     # 4. EVENTOS: Lo tuyo irá en /api/eventos/...
     path('api/eventos/', include('eventos.urls')),
+
+    # 5. SESIONES: Lo de Mangel irá en /api/sesiones/...
+    path('api/sesiones/', include('sesiones.urls'))
 ]
