@@ -1,7 +1,6 @@
-from django.shortcuts import render
 
 # Create your views here.
-from rest_framework import generics, status, permissions, viewsets
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
@@ -20,16 +19,26 @@ class IniciarSesionView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        # Asignamos el usuario actual automáticamente
-        serializer.save(usuario=self.request.user)
+        user = self.request.user
+        
+        # LÓGICA DE SEGURIDAD DE TIPOS:
+        # Intentamos obtener la instancia de 'Jugador'.
+        # Si vuestro Auth User ya es Jugador, usamos 'user'.
+        # Si tenéis un User estándar vinculado a Jugador (OneToOne), usamos 'user.jugador'.
+        
+        jugador_real = getattr(user, 'jugador', user) 
+        # (Esto busca si existe el atributo .jugador, si no, usa el user tal cual)
 
+        serializer.save(usuario=jugador_real)
 # RF5.2: Finalizar Sesión 
 class FinalizarSesionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        user = request.user
+        jugador_real = getattr(user, 'jugador', user)
         # RS5.2.2: Debe existir sesión activa 
-        sesion = get_object_or_404(Sesion, usuario=request.user, activa=True)
+        sesion = get_object_or_404(Sesion, usuario=jugador_real, activa=True)
         
         serializer = FinalizarSesionSerializer(data=request.data)
         if serializer.is_valid():
@@ -53,7 +62,9 @@ class BalanceSesionView(generics.RetrieveAPIView):
         """
         Permite consultar cualquier sesión del usuario (activa o cerrada).
         """
-        return Sesion.objects.filter(usuario=self.request.user)
+        user = self.request.user
+        jugador_real= getattr(user, 'jugador', user)
+        return Sesion.objects.filter(usuario=jugador_real)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -75,7 +86,9 @@ class ListarSesionesView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Sesion.objects.filter(usuario=self.request.user).order_by('-fecha_actual', '-hora_inicio')
+        user = self.request.user
+        jugador_real = getattr(user, 'jugador', user)
+        return Sesion.objects.filter(usuario=jugador_real).order_by('-fecha_actual', '-hora_inicio')
 
 # RF5.4: Listar historial de juegos (Modificado para soportar sesiones cerradas)
 class HistorialJuegosView(generics.RetrieveAPIView):
@@ -88,8 +101,10 @@ class HistorialJuegosView(generics.RetrieveAPIView):
         Devuelve el universo de sesiones disponibles para este usuario.
         Al no filtrar por 'activa=True', permite consultar el historial de sesiones cerradas.
         """
+        user = self.request.user
+        jugador_real = getattr(user, 'jugador', user)
         # RS5.4.1: Vinculación estricta al usuario autenticado
-        return Sesion.objects.filter(usuario=self.request.user)
+        return Sesion.objects.filter(usuario=jugador_real)
 
     # Nota: Ya no necesitamos sobrescribir get_object(), 
     # RetrieveAPIView se encarga de buscar la sesión concreta usando el 'pk' de la URL 
