@@ -2,22 +2,22 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
-
+from usuarios.models import Jugador
 class Sesion(models.Model):
     # Relación con el Jugador (Usuario)
     usuario = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        Jugador,
         on_delete=models.CASCADE,
         related_name='sesiones',
         db_column='DNI_JUGADOR'  # Mapeo al campo DNI del diseño 
     )
 
-    # Datos de inicio [cite: 1960]
+    # Datos de inicio 
     fecha_actual = models.DateField(auto_now_add=True)
     hora_inicio = models.TimeField(auto_now_add=True)
     saldo_inicio = models.DecimalField(max_digits=10, decimal_places=2)
 
-    # Reglas de Juego Responsable [cite: 1964, 1965]
+    # Reglas de Juego Responsable 
     regla1_limite_gasto_diario = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
@@ -29,7 +29,7 @@ class Sesion(models.Model):
         help_text="Límite de operaciones por hora"
     )
 
-    # Datos de fin [cite: 1986]
+    # Datos de fin 
     saldo_final = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     hora_fin = models.TimeField(null=True, blank=True)
     duracion_sesion = models.DurationField(null=True, blank=True)
@@ -45,7 +45,7 @@ class Sesion(models.Model):
 
     def finalizar_sesion(self, saldo_actual):
         """
-        Cierra la sesión calculando tiempos y balances según RF5.2[cite: 1980].
+        Cierra la sesión calculando tiempos y balances según RF5.2.
         """
         now = timezone.now()
         self.hora_fin = now.time()
@@ -62,7 +62,7 @@ class Sesion(models.Model):
 
     def obtener_balance(self):
         """
-        RF5.3: Calcular ganancias o pérdidas[cite: 2007].
+        RF5.3: Calcular ganancias o pérdidas.
         """
         if self.saldo_final is None:
             return 0 # O calcular contra saldo actual en tiempo real
