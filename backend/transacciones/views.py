@@ -3,6 +3,13 @@ from django.db import transaction
 from .models import Transaccion, Apuesta
 from .serializers import TransaccionSerializer, ApuestaSerializer
 
+# 🔴 NUEVO: Importamos el modelo Sesion de la app de tu compañero
+# Si esto da error, asegúrate de que la app 'sesiones' existe y tiene el modelo.
+try:
+    from sesiones.models import Sesion
+except ImportError:
+    Sesion = None  # Fallback por si la app de sesiones no está lista aún
+
 class TransaccionViewSet(viewsets.ModelViewSet):
     queryset = Transaccion.objects.all().order_by('-fecha')
     serializer_class = TransaccionSerializer
@@ -30,36 +37,43 @@ class ApuestaViewSet(viewsets.ModelViewSet):
     queryset = Apuesta.objects.all().order_by('-fecha')
     serializer_class = ApuestaSerializer
 
-    # 1. AL CREAR LA APUESTA (Restamos el dinero apostado)
+    # 1. AL CREAR LA APUESTA (Restamos dinero + Vinculamos Sesión)
     def perform_create(self, serializer):
         with transaction.atomic():
-            apuesta = serializer.save()
+            # 🔴 NUEVO: LÓGICA DE VINCULACIÓN DE SESIÓN
+            # 1. Obtenemos quién está apostando (del formulario)
+            usuario_apostador = serializer.validated_data['usuario']
+            sesion_activa = None
+
+            # 2. Buscamos si ese usuario tiene una sesión 'activa=True'
+            if Sesion:
+                sesion_activa = Sesion.objects.filter(usuario=usuario_apostador, activa=True).first()
+
+            # 3. Guardamos la apuesta inyectando la sesión encontrada (o None si no hay)
+            apuesta = serializer.save(sesion=sesion_activa)
+            
+            # --- FIN DE LO NUEVO, AHORA TU LÓGICA DE COBRO ---
+
             usuario = apuesta.usuario
             
             # Cobramos la entrada
             usuario.cartera_monetaria -= apuesta.cantidad_apostada
             
-            # OJO: Si por lo que sea creas la apuesta ya ganada directamente (raro, pero posible)
+            # Si se crea ya ganada
             if apuesta.ganancia > 0:
                 usuario.cartera_monetaria += apuesta.ganancia
                 
             usuario.save()
 
-    # 2. AL RESOLVER LA APUESTA (Sumamos si gana)
-    # Este método se activa cuando haces un PUT/PATCH para poner la ganancia
+    # 2. AL RESOLVER LA APUESTA (Igual que antes)
     def perform_update(self, serializer):
         with transaction.atomic():
-            # Recuperamos la apuesta antigua para comparar (evitar pagar doble si editas dos veces)
             apuesta_antigua = self.get_object()
             ganancia_anterior = apuesta_antigua.ganancia
             
-            # Guardamos los nuevos datos
             apuesta_nueva = serializer.save()
             usuario = apuesta_nueva.usuario
             
-            # Calculamos la diferencia de ganancia
-            # Si antes era 0 y ahora es 50, sumamos 50.
-            # Si nos equivocamos y corregimos de 50 a 60, sumamos solo los 10 extra.
             diferencia_ganancia = apuesta_nueva.ganancia - ganancia_anterior
             
             if diferencia_ganancia != 0:
