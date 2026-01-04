@@ -19,18 +19,18 @@ class Juego(models.Model):
     estado = models.BooleanField(default=True, help_text="Activo/Inactivo")
     descripcion = models.CharField(max_length=200)
 
-    class Meta:
-        # Esto asegura que la base de datos rechace valores negativos a nivel físico
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(apuesta_minima__gt=0), 
-                name="apuesta_minima_positiva"
-            ),
-            models.CheckConstraint(
-                check=models.Q(apuesta_maxima__gte=models.F('apuesta_minima')), 
-                name="max_mayor_que_min"
-            ),
-        ]
+    # class Meta:
+    #     # Esto asegura que la base de datos rechace valores negativos a nivel físico
+    #     constraints = [
+    #         models.CheckConstraint(
+    #             check=models.Q(apuesta_minima__gt=0), 
+    #             name="apuesta_minima_positiva"
+    #         ),
+    #         models.CheckConstraint(
+    #             check=models.Q(apuesta_maxima__gte=models.F('apuesta_minima')), 
+    #             name="max_mayor_que_min"
+    #         ),
+    #     ]
 
     def clean(self):
         """Validación lógica personalizada"""
