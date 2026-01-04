@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Sesion
+from transacciones.models import Transaccion, Apuesta
 
 class IniciarSesionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -60,3 +61,25 @@ class ModificarSeguridadSerializer(serializers.ModelSerializer):
         if data.get('regla1_limite_gasto_diario', 0) < 0 or data.get('regla2_limite_operaciones_hora', 0) < 0:
             raise serializers.ValidationError("Los valores de los límites no pueden ser negativos.")
         return data
+    
+class HistorialApuestaSerializer(serializers.ModelSerializer):
+    """
+    Serializador auxiliar para mostrar los detalles de cada jugada en el historial.
+    """
+    juego_nombre = serializers.CharField(source='juego.nombre', read_only=True)
+    
+    class Meta:
+        model = Apuesta
+        fields = ['fecha', 'juego_nombre', 'cantidad_apostada', 'ganancia', 'resultado']
+
+class HistorialSesionSerializer(serializers.ModelSerializer):
+    """
+    RF5.4: Estructura completa del historial de la sesión.
+    Devuelve los datos de la sesión y la lista de juegos (apuestas) realizados.
+    """
+    # Usamos el related_name definido por Julián en su modelo Apuesta
+    juegos_jugados = HistorialApuestaSerializer(source='apuestas_sesion', many=True, read_only=True)
+    
+    class Meta:
+        model = Sesion
+        fields = ['id', 'fecha_actual', 'hora_inicio', 'hora_fin', 'saldo_inicio', 'saldo_final', 'juegos_jugados']

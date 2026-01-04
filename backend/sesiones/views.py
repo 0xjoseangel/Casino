@@ -10,7 +10,8 @@ from .serializers import (
     IniciarSesionSerializer, 
     FinalizarSesionSerializer, 
     BalanceSesionSerializer,
-    ModificarSeguridadSerializer
+    ModificarSeguridadSerializer,
+    HistorialSesionSerializer
 )
 
 # RF5.1: Comenzar Sesión [cite: 1954]
@@ -64,11 +65,29 @@ class BalanceSesionView(generics.RetrieveAPIView):
         data['beneficio_perdida'] = saldo_fin - instance.saldo_inicio
         return Response(data)
 
-# RF5.5: Modificar criterios de seguridad [cite: 2024]
+# RF5.4: Listar historial de juegos (Modificado para soportar sesiones cerradas)
+class HistorialJuegosView(generics.RetrieveAPIView):
+    serializer_class = HistorialSesionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'pk'  # Buscaremos por la Clave Primaria (ID de la sesión)
+
+    def get_queryset(self):
+        """
+        Devuelve el universo de sesiones disponibles para este usuario.
+        Al no filtrar por 'activa=True', permite consultar el historial de sesiones cerradas.
+        """
+        # RS5.4.1: Vinculación estricta al usuario autenticado
+        return Sesion.objects.filter(usuario=self.request.user)
+
+    # Nota: Ya no necesitamos sobrescribir get_object(), 
+    # RetrieveAPIView se encarga de buscar la sesión concreta usando el 'pk' de la URL 
+    # dentro del queryset que definimos arriba.
+
+# RF5.5: Modificar criterios de seguridad 
 class ModificarSeguridadView(generics.UpdateAPIView):
     queryset = Sesion.objects.all()
     serializer_class = ModificarSeguridadSerializer
-    permission_classes = [permissions.IsAdminUser] # Solo Admin [cite: 2026]
+    permission_classes = [permissions.IsAdminUser] # Solo Admin 
     lookup_field = 'pk'
 
     def update(self, request, *args, **kwargs):
