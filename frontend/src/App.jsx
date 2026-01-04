@@ -8,6 +8,9 @@ import TorneosAdmin from './pages/torneos'; // Tu página actual (Gestión)
 import TorneosJugador from './pages/torneosJugador'; // <--- NUEVA (Vista cliente)
 import Home from './pages/home';
 import Sesiones from './pages/Sesiones';
+import ListaTransacciones from './pages/listaTransacciones';
+import Apuestas from './pages/apuestas';
+
 function App() {
   const [rol, setRol] = useState(localStorage.getItem('casino_rol') || null);
 
@@ -44,7 +47,8 @@ function App() {
                 <Link to="/eventos" className="nav-link">🏆 Torneos (Edit)</Link>
                 <Link to="/juegos" className="nav-link">🎰 Juegos</Link>
                 <Link to="/sesiones" className="nav-link">⏱️ Control Sesiones</Link>
-                <Link to="/movimientos" className="nav-link">💸 Finanzas</Link>
+                <Link to="/apuestas" className="nav-link">🎲 Apuestas</Link>
+                <Link to="/transacciones" className="nav-link">📜 Transacciones</Link>
               </>
             )}
 
@@ -55,6 +59,8 @@ function App() {
                  <Link to="/mis-torneos" className="nav-link">🏆 Torneos Disp.</Link>
                  <Link to="/catalogo" className="nav-link">🎰 Jugar</Link>
                  <Link to="/perfil" className="nav-link">👤 Mi Perfil</Link>
+                 <Link to="/transacciones" className="nav-link">📜 Mis Movimientos</Link>
+                 <Link to="/apuestas" className="nav-link">🎲 Apuestas</Link>
               </>
             )}
 
@@ -78,6 +84,8 @@ function App() {
                 <Route path="/eventos" element={<TorneosAdmin />} />
                 {/* Aquí irían las rutas de tus compañeros (modo admin) */}
                 <Route path="/sesiones" element={<Sesiones />} />
+                <Route path="/transacciones" element={<ListaTransacciones />} />
+                <Route path="/apuestas" element={<Apuestas />} />
               </>
             )}
 
@@ -86,6 +94,8 @@ function App() {
               <>
                 <Route path="/mis-torneos" element={<TorneosJugador />} />
                 {/* Aquí irían las rutas de jugar */}
+                <Route path="/transacciones" element={<ListaTransacciones />} />
+                <Route path="/apuestas" element={<Apuestas />} />
               </>
             )}
 
