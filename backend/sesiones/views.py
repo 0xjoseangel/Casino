@@ -87,8 +87,12 @@ class ListarSesionesView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        jugador_real = getattr(user, 'jugador', user)
-        return Sesion.objects.filter(usuario=jugador_real).order_by('-fecha_actual', '-hora_inicio')
+        
+        # SI ES ADMIN: Ve todas las sesiones de la base de datos
+        if user.is_staff or user.is_superuser:
+            return Sesion.objects.all().order_by('-fecha_actual', '-hora_inicio')
+            
+
 
 # RF5.4: Listar historial de juegos (Modificado para soportar sesiones cerradas)
 class HistorialJuegosView(generics.RetrieveAPIView):
