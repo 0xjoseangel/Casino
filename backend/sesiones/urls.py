@@ -4,7 +4,8 @@ from .views import (
     FinalizarSesionView, 
     BalanceSesionView,
     ModificarSeguridadView,
-    HistorialJuegosView
+    HistorialJuegosView,
+    ListarSesionesView
 )
 
 
@@ -16,8 +17,8 @@ urlpatterns = [
     path('finalizar/', FinalizarSesionView.as_view(), name='finalizar_sesion'),
     
     # RF5.3
-    path('balance/', BalanceSesionView.as_view(), name='balance_sesion'),
-    
+    path('balance/<int:pk>/', BalanceSesionView.as_view(), name='balance_sesion'),
+    path('listado/', ListarSesionesView.as_view(), name='listar_sesiones'),
     # RF5.4
     path('historial/<int:pk>/', HistorialJuegosView.as_view(), name='historial_juegos_sesion'),
 

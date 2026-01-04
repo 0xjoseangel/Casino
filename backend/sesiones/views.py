@@ -14,7 +14,7 @@ from .serializers import (
     HistorialSesionSerializer
 )
 
-# RF5.1: Comenzar Sesión [cite: 1954]
+# RF5.1: Comenzar Sesión 
 class IniciarSesionView(generics.CreateAPIView):
     serializer_class = IniciarSesionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -23,12 +23,12 @@ class IniciarSesionView(generics.CreateAPIView):
         # Asignamos el usuario actual automáticamente
         serializer.save(usuario=self.request.user)
 
-# RF5.2: Finalizar Sesión [cite: 1980]
+# RF5.2: Finalizar Sesión 
 class FinalizarSesionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        # RS5.2.2: Debe existir sesión activa [cite: 1995]
+        # RS5.2.2: Debe existir sesión activa 
         sesion = get_object_or_404(Sesion, usuario=request.user, activa=True)
         
         serializer = FinalizarSesionSerializer(data=request.data)
@@ -37,21 +37,23 @@ class FinalizarSesionView(APIView):
             sesion.finalizar_sesion(serializer.validated_data['saldo_final'])
             
             return Response({
-                "mensaje": "Sesión finalizada correctamente", # [cite: 1992]
+                "mensaje": "Sesión finalizada correctamente", 
                 "duracion": str(sesion.duracion_sesion),
                 "saldo_final": sesion.saldo_final
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# RF5.3: Obtener Balance de Sesión [cite: 1996]
+# RF5.3: Obtener Balance de Sesión 
 class BalanceSesionView(generics.RetrieveAPIView):
     serializer_class = BalanceSesionSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'pk'  # CAMBIO: Ahora buscamos por ID, igual que en el historial
 
-    def get_object(self):
-        # RS5.3.1: Solo se consulta si existe sesión activa (o la última recién cerrada) [cite: 2008]
-        # Nota: Adaptamos para devolver la última sesión del usuario
-        return Sesion.objects.filter(usuario=self.request.user).latest('id')
+    def get_queryset(self):
+        """
+        Permite consultar cualquier sesión del usuario (activa o cerrada).
+        """
+        return Sesion.objects.filter(usuario=self.request.user)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -64,6 +66,16 @@ class BalanceSesionView(generics.RetrieveAPIView):
         
         data['beneficio_perdida'] = saldo_fin - instance.saldo_inicio
         return Response(data)
+
+class ListarSesionesView(generics.ListAPIView):
+    """
+    Devuelve la lista simple de todas las sesiones del usuario para el menú lateral.
+    """
+    serializer_class = BalanceSesionSerializer # Reutilizamos este que ya tiene datos básicos
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Sesion.objects.filter(usuario=self.request.user).order_by('-fecha_actual', '-hora_inicio')
 
 # RF5.4: Listar historial de juegos (Modificado para soportar sesiones cerradas)
 class HistorialJuegosView(generics.RetrieveAPIView):
