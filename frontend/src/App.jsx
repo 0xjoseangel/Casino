@@ -7,7 +7,7 @@ import Login from './pages/login';
 import TorneosAdmin from './pages/torneos'; // Tu página actual (Gestión)
 import TorneosJugador from './pages/torneosJugador'; // <--- NUEVA (Vista cliente)
 import Home from './pages/home';
-
+import Sesiones from './pages/Sesiones';
 function App() {
   const [rol, setRol] = useState(localStorage.getItem('casino_rol') || null);
 
@@ -43,6 +43,7 @@ function App() {
                 <Link to="/usuarios" className="nav-link">👤 Usuarios</Link>
                 <Link to="/eventos" className="nav-link">🏆 Torneos (Edit)</Link>
                 <Link to="/juegos" className="nav-link">🎰 Juegos</Link>
+                <Link to="/sesiones" className="nav-link">⏱️ Control Sesiones</Link>
                 <Link to="/movimientos" className="nav-link">💸 Finanzas</Link>
               </>
             )}
@@ -76,6 +77,7 @@ function App() {
               <>
                 <Route path="/eventos" element={<TorneosAdmin />} />
                 {/* Aquí irían las rutas de tus compañeros (modo admin) */}
+                <Route path="/sesiones" element={<Sesiones />} />
               </>
             )}
 
