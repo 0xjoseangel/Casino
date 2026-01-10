@@ -6,10 +6,10 @@ class Jugador(models.Model):
     apellidos = models.CharField(max_length=20) 
     email = models.EmailField(max_length=30, unique=True)
     direccion = models.CharField(max_length=50)
-    telefono = models.IntegerField()
+    telefono = models.IntegerField(unique=True)
     fecha_nacimiento = models.DateField() 
     contrasena = models.CharField(max_length=20)
-    cartera_monetaria = models.IntegerField() 
+    cartera_monetaria = models.IntegerField(default=0) 
     baja = models.BooleanField(default=False) 
 
     class Meta:
@@ -23,7 +23,7 @@ class Administrador(models.Model):
     apellidos = models.CharField(max_length=20)
     email = models.EmailField(max_length=30, unique=True)
     direccion = models.CharField(max_length=50)
-    telefono = models.IntegerField()
+    telefono = models.IntegerField(unique=True)
     fecha_nacimiento = models.DateField()
     contrasena = models.CharField(max_length=20)
     baja = models.BooleanField(default=False)
