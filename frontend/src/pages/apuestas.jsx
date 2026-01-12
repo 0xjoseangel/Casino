@@ -117,6 +117,21 @@ function Apuestas() {
 
     setEnviando(true);
 
+    const cantidadNum = parseFloat(form.cantidad_apostada);
+
+    // Validaciones Locales
+    if (cantidadNum <= 0) {
+      alert('La apuesta debe ser mayor a 0.');
+      setEnviando(false);
+      return;
+    }
+
+    if (jugador && cantidadNum > jugador.cartera_monetaria) {
+      alert('⚠️ Saldo insuficiente para realizar esta apuesta.');
+      setEnviando(false);
+      return;
+    }
+
     const datosApuesta = {
       usuario: jugador.dni,
       juego: form.juego,
