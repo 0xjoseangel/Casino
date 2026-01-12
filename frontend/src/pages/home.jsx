@@ -6,22 +6,22 @@ function Home({ usuario }) {
   const [rol, setRol] = useState(null);
   const [saldo, setSaldo] = useState(0);
   const [apuestasCount, setApuestasCount] = useState(0);
+  const [usuariosCount, setUsuariosCount] = useState(0);
 
   useEffect(() => {
     // Determinar ROL
     if (usuario?.rol) {
       setRol(usuario.rol);
+      if (usuario.rol === 'admin') cargarDatosAdmin();
+      else cargarDatosJugador(usuario);
     } else {
       const storedUser = localStorage.getItem('casino_usuario');
       if (storedUser) {
         const parsed = JSON.parse(storedUser);
         setRol(parsed.rol);
+        if (parsed.rol === 'admin') cargarDatosAdmin();
+        else cargarDatosJugador(parsed);
       }
-    }
-
-    // Cargar Datos si es JUGADOR (y tenemos usuario)
-    if (usuario && usuario.rol !== 'admin') {
-      cargarDatosJugador(usuario);
     }
   }, [usuario]);
 
@@ -44,6 +44,14 @@ function Home({ usuario }) {
     const resApuestas = await getData(`movimientos/apuestas/?usuario=${user.dni}`);
     if (resApuestas && Array.isArray(resApuestas)) {
       setApuestasCount(resApuestas.length);
+    }
+  };
+
+  const cargarDatosAdmin = async () => {
+    // Cargar total de jugadores. Podríamos sumar admins también si hubiera endpoint.
+    const resJug = await getData('usuarios/jugadores/');
+    if (resJug && Array.isArray(resJug)) {
+      setUsuariosCount(resJug.length);
     }
   };
 
@@ -73,7 +81,7 @@ function Home({ usuario }) {
           <div className="stats-grid">
             <div className="stat-card">
               <h3>Usuarios Totales</h3>
-              <p className="stat-number">1,245</p>
+              <p className="stat-number">{usuariosCount}</p>
             </div>
             <div className="stat-card">
               <h3>Caja del Casino</h3>
