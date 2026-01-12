@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-// 1. IMPORTAMOS IGUAL QUE EN SESIONES
 import { getData, postData } from '../services/api';
 
 function ListaTransacciones() {
   const [transacciones, setTransacciones] = useState([]);
   const [jugadores, setJugadores] = useState([]);
-  
+  const [loading, setLoading] = useState(true);
+
   const [form, setForm] = useState({
     usuario: '',
     tipo: 'DEPOSITO',
@@ -18,48 +18,58 @@ function ListaTransacciones() {
   }, []);
 
   const cargarDatos = async () => {
-      // 2. USAMOS getData
-      const resTrans = await getData('/movimientos/transacciones/');
-      if (resTrans && !resTrans.error) setTransacciones(resTrans);
+    const resTrans = await getData('/movimientos/transacciones/');
+    if (resTrans && !resTrans.error) setTransacciones(resTrans);
 
-      const resJug = await getData('/usuarios/jugadores/');
-      if (resJug && !resJug.error) setJugadores(resJug);
+    const resJug = await getData('/usuarios/jugadores/');
+    if (resJug && !resJug.error) setJugadores(resJug);
+
+    setLoading(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // 3. USAMOS postData
     const resultado = await postData('/movimientos/transacciones/', form);
 
     if (resultado && !resultado.error) {
-        alert('✅ Operación realizada con éxito');
-        setForm({ ...form, cantidad: '', destinatario: '' });
-        cargarDatos(); 
+      alert('Operación realizada con éxito');
+      setForm({ ...form, cantidad: '', destinatario: '' });
+      cargarDatos();
     } else {
-        alert('❌ Error en la operación. Revisa los datos.');
+      alert('Error en la operación. Revisa los datos.');
+    }
+  };
+
+  const getTipoIcon = (tipo) => {
+    switch (tipo) {
+      case 'DEPOSITO': return '📥';
+      case 'RETIRO': return '📤';
+      case 'TRANSFERENCIA': return '➡️';
+      default: return '💰';
     }
   };
 
   return (
-    <div className="card">
-      <h2>💸 Cajero y Movimientos</h2>
+    <div className="fade-in">
+      <div className="page-header">
+        <h1 className="page-title gold">Cajero y Movimientos</h1>
+        <p className="page-subtitle">Gestiona depósitos, retiros y transferencias</p>
+      </div>
 
-      {/* --- FORMULARIO DE OPERACIONES --- */}
-      <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '10px', marginBottom: '30px', border: '1px solid #ddd' }}>
-        <h3 style={{ marginTop: 0, color: '#2c3e50' }}>Nueva Operación</h3>
-        
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', alignItems: 'end' }}>
-          
-          <div>
-            <label style={{display:'block', marginBottom: 5, fontWeight:'bold'}}>Jugador:</label>
-            <select 
-              value={form.usuario} 
-              onChange={(e) => setForm({...form, usuario: e.target.value})}
+      {/* FORMULARIO */}
+      <div className="card highlight-gold">
+        <div className="card-header">
+          <h3 className="card-title">Nueva Operación</h3>
+        </div>
+        <form onSubmit={handleSubmit} className="form-grid">
+          <div className="form-group">
+            <label className="form-label">Jugador</label>
+            <select
+              value={form.usuario}
+              onChange={(e) => setForm({ ...form, usuario: e.target.value })}
               required
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
             >
-              <option value="">-- Seleccionar --</option>
+              <option value="">Seleccionar jugador</option>
               {jugadores.map(j => (
                 <option key={j.id} value={j.id}>
                   {j.nombre} {j.apellidos} ({j.cartera_monetaria}€)
@@ -68,12 +78,11 @@ function ListaTransacciones() {
             </select>
           </div>
 
-          <div>
-            <label style={{display:'block', marginBottom: 5, fontWeight:'bold'}}>Tipo:</label>
-            <select 
-              value={form.tipo} 
-              onChange={(e) => setForm({...form, tipo: e.target.value})}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+          <div className="form-group">
+            <label className="form-label">Tipo de Operación</label>
+            <select
+              value={form.tipo}
+              onChange={(e) => setForm({ ...form, tipo: e.target.value })}
             >
               <option value="DEPOSITO">📥 Depósito</option>
               <option value="RETIRO">📤 Retiro</option>
@@ -81,71 +90,94 @@ function ListaTransacciones() {
             </select>
           </div>
 
-          <div>
-            <label style={{display:'block', marginBottom: 5, fontWeight:'bold'}}>Cantidad (€):</label>
-            <input 
-              type="number" 
+          <div className="form-group">
+            <label className="form-label">Cantidad (€)</label>
+            <input
+              type="number"
               step="0.01"
               value={form.cantidad}
-              onChange={(e) => setForm({...form, cantidad: e.target.value})}
-              required 
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              onChange={(e) => setForm({ ...form, cantidad: e.target.value })}
+              placeholder="0.00"
+              required
             />
           </div>
 
           {form.tipo === 'TRANSFERENCIA' && (
-            <div>
-              <label style={{display:'block', marginBottom: 5, fontWeight:'bold'}}>Destinatario:</label>
-              <select 
-                value={form.destinatario} 
-                onChange={(e) => setForm({...form, destinatario: e.target.value})}
+            <div className="form-group">
+              <label className="form-label">Destinatario</label>
+              <select
+                value={form.destinatario}
+                onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
                 required={form.tipo === 'TRANSFERENCIA'}
-                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
               >
-                <option value="">-- Enviar a --</option>
+                <option value="">Seleccionar destinatario</option>
                 {jugadores.map(j => (
                   j.id !== parseInt(form.usuario) && (
-                    <option key={j.id} value={j.id}>{j.nombre} {j.apellidos}</option>
+                    <option key={j.id} value={j.id}>
+                      {j.nombre} {j.apellidos}
+                    </option>
                   )
                 ))}
               </select>
             </div>
           )}
 
-          <button 
-            type="submit" 
-            style={{ padding: '10px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            CONFIRMAR
-          </button>
+          <div className={form.tipo === 'TRANSFERENCIA' ? '' : 'form-group'}>
+            <label className="form-label">&nbsp;</label>
+            <button type="submit" className="btn btn-full">
+              Confirmar Operación
+            </button>
+          </div>
         </form>
       </div>
 
-      {/* --- TABLA DE HISTORIAL --- */}
-      <table border="1" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#34495e', color: 'white' }}>
-            <th style={{ padding: '10px' }}>Fecha</th>
-            <th style={{ padding: '10px' }}>Tipo</th>
-            <th style={{ padding: '10px' }}>Cantidad</th>
-            <th style={{ padding: '10px' }}>Usuario</th>
-            <th style={{ padding: '10px' }}>Info Extra</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transacciones.map(t => (
-            <tr key={t.id} style={{ borderBottom: '1px solid #ddd' }}>
-              <td style={{ padding: '10px' }}>{new Date(t.fecha).toLocaleString()}</td>
-              <td style={{ padding: '10px' }}>{t.tipo}</td>
-              <td style={{ padding: '10px', fontWeight: 'bold' }}>{t.cantidad}€</td>
-              <td style={{ padding: '10px' }}>{t.usuario}</td>
-              <td style={{ padding: '10px', fontSize: '0.9em', color: '#666' }}>
-                {t.destinatario ? `➡ Envía a: ${t.destinatario}` : '-'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* HISTORIAL */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">Historial de Transacciones</h3>
+          <span className="badge badge-gold">{transacciones.length} movimientos</span>
+        </div>
+
+        {loading ? (
+          <div className="loading">Cargando transacciones...</div>
+        ) : transacciones.length > 0 ? (
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Cantidad</th>
+                  <th>Usuario</th>
+                  <th>Info</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transacciones.map(t => (
+                  <tr key={t.id}>
+                    <td>{new Date(t.fecha).toLocaleString()}</td>
+                    <td>
+                      <span className="badge badge-gold">
+                        {getTipoIcon(t.tipo)} {t.tipo}
+                      </span>
+                    </td>
+                    <td className="text-gold">{t.cantidad}€</td>
+                    <td>{t.usuario}</td>
+                    <td className="text-muted">
+                      {t.destinatario ? `Envía a: ${t.destinatario}` : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <div className="icon">💸</div>
+            <p>No hay transacciones registradas.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

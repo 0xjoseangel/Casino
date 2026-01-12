@@ -1,17 +1,114 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import './App.css';
 
-// TUS PÁGINAS IMPORTADAS
+// Páginas importadas
 import Login from './pages/login';
-import TorneosAdmin from './pages/torneos'; 
-import TorneosJugador from './pages/torneosJugador'; 
+import TorneosAdmin from './pages/torneos';
+import TorneosJugador from './pages/torneosJugador';
 import Home from './pages/home';
 import Sesiones from './pages/Sesiones';
 import ListaTransacciones from './pages/listaTransacciones';
 import Apuestas from './pages/apuestas';
 import PromocionesAdmin from './pages/promocionesAdmin';
 import PromocionesJugador from './pages/promocionesJugador';
+
+// Componente NavLink con estado activo
+function NavItem({ to, icon, children }) {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+
+  return (
+    <Link to={to} className={`nav-link ${isActive ? 'active' : ''}`}>
+      <span className="nav-icon">{icon}</span>
+      {children}
+    </Link>
+  );
+}
+
+function AppContent({ usuario, logout }) {
+  const esAdmin = usuario.rol === 'admin';
+
+  return (
+    <div className="app-container">
+      {/* SIDEBAR */}
+      <aside className={`sidebar ${!esAdmin ? 'player-theme' : ''}`}>
+        <div className="sidebar-header">
+          <h1 className={esAdmin ? 'admin-title' : 'player-title'}>
+            {esAdmin ? 'PANEL ADMIN' : 'ZONA JUEGO'}
+          </h1>
+        </div>
+
+        <nav>
+          <NavItem to="/dashboard" icon="🏠">Inicio</NavItem>
+
+          {/* MENÚ DE ADMINISTRADOR */}
+          {esAdmin && (
+            <>
+              <div className="nav-section-label">Gestión</div>
+              <NavItem to="/usuarios" icon="👤">Usuarios</NavItem>
+              <NavItem to="/torneos-gestion" icon="🏆">Torneos</NavItem>
+              <NavItem to="/juegos-gestion" icon="🎰">Juegos</NavItem>
+              <NavItem to="/sesiones-global" icon="⏱️">Sesiones</NavItem>
+              <NavItem to="/finanzas" icon="💰">Transacciones</NavItem>
+              <NavItem to="/promociones-gestion" icon="🎁">Promociones</NavItem>
+            </>
+          )}
+
+          {/* MENÚ DE JUGADOR */}
+          {!esAdmin && (
+            <>
+              <div className="nav-section-label">Jugar</div>
+              <NavItem to="/mis-torneos" icon="🏆">Torneos</NavItem>
+              <NavItem to="/mis-apuestas" icon="🎲">Mis Apuestas</NavItem>
+              <NavItem to="/casino" icon="🎰">Sala de Juegos</NavItem>
+              <NavItem to="/mi-perfil" icon="👤">Mi Perfil</NavItem>
+              <NavItem to="/promociones" icon="🎁">Ofertas</NavItem>
+            </>
+          )}
+        </nav>
+
+        <div className="sidebar-footer">
+          <div className="user-info">
+            <div className="user-info-label">Conectado como</div>
+            <div className="user-info-name">{usuario.nombre}</div>
+          </div>
+          <button onClick={logout} className="btn btn-secondary btn-full btn-sm">
+            Cerrar Sesión
+          </button>
+        </div>
+      </aside>
+
+      {/* CONTENIDO PRINCIPAL */}
+      <main className="content">
+        <Routes>
+          <Route path="/dashboard" element={<Home usuario={usuario} />} />
+
+          {/* Rutas de Admin */}
+          {esAdmin && (
+            <>
+              <Route path="/torneos-gestion" element={<TorneosAdmin />} />
+              <Route path="/sesiones-global" element={<Sesiones />} />
+              <Route path="/finanzas" element={<ListaTransacciones />} />
+              <Route path="/promociones-gestion" element={<PromocionesAdmin />} />
+            </>
+          )}
+
+          {/* Rutas de Jugador */}
+          {!esAdmin && (
+            <>
+              <Route path="/mis-torneos" element={<TorneosJugador />} />
+              <Route path="/mis-apuestas" element={<Apuestas />} />
+              <Route path="/promociones" element={<PromocionesJugador />} />
+            </>
+          )}
+
+          <Route path="*" element={<Navigate to={esAdmin ? "/dashboard" : "/mis-torneos"} />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
 
 function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -34,91 +131,9 @@ function App() {
     );
   }
 
-  const esAdmin = usuario.rol === 'admin';
-
   return (
     <BrowserRouter>
-      <div className="app-container">
-        
-        {/* --- BARRA LATERAL --- */}
-        <div className="sidebar" style={{borderColor: esAdmin ? '#d4af37' : '#00ff88'}}>
-          <h1 style={{color: esAdmin ? '#d4af37' : '#00ff88'}}>
-            {esAdmin ? 'PANEL ADMIN' : 'ZONA JUEGO'}
-          </h1>
-
-          <nav>
-            <Link to="/dashboard" className="nav-link">🏠 Inicio</Link>
-            
-            {/* MENÚ DE ADMINISTRADOR */}
-            {esAdmin && (
-              <>
-                <div style={{fontSize:'0.7rem', color:'#666', marginTop:15, marginBottom:5}}>GESTIÓN</div>
-                <Link to="/usuarios" className="nav-link">👤 Usuarios</Link>
-                <Link to="/torneos-gestion" className="nav-link">🏆 Torneos (Edit)</Link>
-                <Link to="/juegos-gestion" className="nav-link">🎰 Juegos</Link>
-                <Link to="/sesiones-global" className="nav-link">⏱️ Sesiones</Link>
-                <Link to="/finanzas" className="nav-link">💰 Transacciones</Link>
-                <Link to="/promociones-gestion" className="nav-link">🎁 Promociones</Link>
-              </>
-            )}
-
-            {/* MENÚ DE JUGADOR */}
-            {!esAdmin && (
-              <>
-                <div style={{fontSize:'0.7rem', color:'#666', marginTop:15, marginBottom:5}}>JUGAR</div>
-                <Link to="/mis-torneos" className="nav-link">🏆 Torneos</Link>
-                <Link to="/mis-apuestas" className="nav-link">🎲 Mis Apuestas</Link> {/* <--- AÑADIDO */}
-                <Link to="/casino" className="nav-link">🎰 Sala de Juegos</Link>
-                <Link to="/mi-perfil" className="nav-link">👤 Mi Perfil</Link>
-                <Link to="/promociones" className="nav-link">🎁 Ofertas</Link>
-              </>
-            )}
-          </nav>
-
-          <div style={{marginTop: 'auto', borderTop:'1px solid #333', paddingTop:10}}>
-             <div style={{fontSize:'0.8rem', color:'#888', marginBottom:5}}>Conectado como:</div>
-             <div style={{fontWeight:'bold', marginBottom:10}}>{usuario.nombre}</div>
-             <button onClick={logout} className="btn" style={{width:'100%', background:'#333', color:'white', fontSize:'0.8rem'}}>
-               Cerrar Sesión
-             </button>
-          </div>
-        </div>
-
-        {/* --- RUTAS (Aquí estaba el fallo, faltaban las definiciones) --- */}
-        <div className="content">
-          <Routes>
-            <Route path="/dashboard" element={<Home usuario={usuario} />} />
-            
-            {/* Rutas de Admin */}
-            {esAdmin && (
-              <>
-                <Route path="/torneos-gestion" element={<TorneosAdmin />} />
-                {/* <Route path="/usuarios" element={<UsuariosAdmin />} /> */}
-                
-                {/* 👇 ESTAS FALTABAN: 👇 */}
-                <Route path="/sesiones-global" element={<Sesiones />} />
-                <Route path="/finanzas" element={<ListaTransacciones />} />
-                <Route path="/promociones-gestion" element={<PromocionesAdmin />} />
-              </>
-            )}
-
-            {/* Rutas de Jugador */}
-            {!esAdmin && (
-              <>
-                <Route path="/mis-torneos" element={<TorneosJugador />} />
-                
-                <Route path="/mis-apuestas" element={<Apuestas />} />
-                <Route path="/promociones" element={<PromocionesJugador />} />
-                
-                {/* <Route path="/casino" element={<Casino />} /> */}
-              </>
-            )}
-
-            <Route path="*" element={<Navigate to={esAdmin ? "/dashboard" : "/mis-torneos"} />} />
-          </Routes>
-        </div>
-
-      </div>
+      <AppContent usuario={usuario} logout={logout} />
     </BrowserRouter>
   );
 }

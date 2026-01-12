@@ -3,6 +3,7 @@ import { getData } from '../services/api';
 
 function PromocionesJugador() {
   const [promos, setPromos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     cargarPromos();
@@ -11,51 +12,69 @@ function PromocionesJugador() {
   const cargarPromos = async () => {
     const data = await getData('eventos/promociones/');
     if (Array.isArray(data)) {
-        // Opcional: Filtrar en el frontend para mostrar solo las activas
-        // const activas = data.filter(p => p.estado === true);
-        setPromos(data); 
+      setPromos(data);
     }
+    setLoading(false);
   };
 
-  return (
-    <div>
-      <h2 style={{color: '#00ff88'}}>🎁 Promociones y Bonos</h2>
-      <p>Aprovecha estas ofertas exclusivas para multiplicar tu saldo.</p>
-
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px', marginTop: '20px'}}>
-        
-        {promos.map(p => (
-          <div key={p.id} className="card" style={{
-              borderLeft: `5px solid ${p.estado ? '#00ff88' : 'red'}`,
-              opacity: p.estado ? 1 : 0.6
-          }}>
-            <div style={{display:'flex', justifyContent:'space-between'}}>
-                <h3 style={{margin:0}}>{p.nombre}</h3>
-                <span style={{fontSize:'1.5rem'}}>⚡ {p.descuento}%</span>
-            </div>
-            
-            <p style={{color:'#aaa', fontStyle:'italic', margin:'10px 0'}}>{p.descripcion}</p>
-            
-            <div style={{background:'#222', padding:'10px', borderRadius:'6px', textAlign:'center', margin:'15px 0', border:'1px dashed #666'}}>
-                <span style={{color:'#888', fontSize:'0.8rem'}}>CÓDIGO:</span><br/>
-                <span style={{color: '#d4af37', fontSize:'1.2rem', fontWeight:'bold', letterSpacing:'2px'}}>
-                    {p.codigo}
-                </span>
-            </div>
-
-            <div style={{fontSize:'0.8rem', color:'#666', display:'flex', justifyContent:'space-between'}}>
-                <span>📅 Validez: {p.fecha_fin}</span>
-                {p.estado ? (
-                    <span style={{color:'#00ff88'}}>DISPONIBLE</span>
-                ) : (
-                    <span style={{color:'red'}}>EXPIRADA</span>
-                )}
-            </div>
-          </div>
-        ))}
-
-        {promos.length === 0 && <p>No hay promociones disponibles en este momento.</p>}
+  if (loading) {
+    return (
+      <div className="fade-in">
+        <div className="loading">Cargando promociones...</div>
       </div>
+    );
+  }
+
+  return (
+    <div className="fade-in">
+      <div className="page-header">
+        <h1 className="page-title neon">Promociones y Bonos</h1>
+        <p className="page-subtitle">Aprovecha estas ofertas exclusivas para multiplicar tu saldo</p>
+      </div>
+
+      {promos.length > 0 ? (
+        <div className="modules-grid">
+          {promos.map(p => (
+            <div
+              key={p.id}
+              className={`card ${p.estado ? 'highlight-neon' : ''}`}
+              style={{ opacity: p.estado ? 1 : 0.6 }}
+            >
+              <div className="flex-between mb-md">
+                <h3 className="card-title">{p.nombre}</h3>
+                <span className="text-gold" style={{ fontSize: '1.5rem' }}>
+                  {p.descuento}%
+                </span>
+              </div>
+
+              <p className="text-muted mb-lg">{p.descripcion}</p>
+
+              <div className="card" style={{ background: 'var(--bg-light)', textAlign: 'center', padding: '16px' }}>
+                <span className="text-muted" style={{ fontSize: '0.75rem' }}>CÓDIGO</span>
+                <div className="text-gold" style={{ fontSize: '1.25rem', fontWeight: 'bold', letterSpacing: '2px', marginTop: '4px' }}>
+                  {p.codigo}
+                </div>
+              </div>
+
+              <div className="flex-between mt-lg">
+                <span className="text-muted" style={{ fontSize: '0.85rem' }}>
+                  Válido hasta: {p.fecha_fin}
+                </span>
+                <span className={`badge ${p.estado ? 'badge-success' : 'badge-error'}`}>
+                  {p.estado ? 'DISPONIBLE' : 'EXPIRADA'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="card">
+          <div className="empty-state">
+            <div className="icon">🎁</div>
+            <p>No hay promociones disponibles en este momento.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
