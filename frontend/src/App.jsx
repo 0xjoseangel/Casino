@@ -2,106 +2,117 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import './App.css';
 
-// TUS PÁGINAS
+// TUS PÁGINAS IMPORTADAS
 import Login from './pages/login';
-import TorneosAdmin from './pages/torneos'; // Tu página actual (Gestión)
-import TorneosJugador from './pages/torneosJugador'; // <--- NUEVA (Vista cliente)
+import TorneosAdmin from './pages/torneos'; 
+import TorneosJugador from './pages/torneosJugador'; 
 import Home from './pages/home';
 import Sesiones from './pages/Sesiones';
 import ListaTransacciones from './pages/listaTransacciones';
 import Apuestas from './pages/apuestas';
 
 function App() {
-  const [rol, setRol] = useState(localStorage.getItem('casino_rol') || null);
+  const [usuario, setUsuario] = useState(() => {
+    const guardado = localStorage.getItem('casino_usuario');
+    return guardado ? JSON.parse(guardado) : null;
+  });
 
-  // Si no hay rol, mostramos Login. Si hay rol, mostramos la App.
-  if (!rol) {
+  const logout = () => {
+    setUsuario(null);
+    localStorage.removeItem('casino_usuario');
+  };
+
+  if (!usuario) {
     return (
       <BrowserRouter>
         <Routes>
-          <Route path="*" element={<Login setRol={setRol} />} />
+          <Route path="*" element={<Login setUsuario={setUsuario} />} />
         </Routes>
       </BrowserRouter>
     );
   }
 
+  const esAdmin = usuario.rol === 'admin';
+
   return (
     <BrowserRouter>
       <div className="app-container">
         
-        {/* --- BARRA LATERAL (Cambia según el rol) --- */}
-        <div className="sidebar" style={{borderColor: rol === 'admin' ? '#d4af37' : '#00ff88'}}>
-          <h1 style={{color: rol === 'admin' ? '#d4af37' : '#00ff88'}}>
-            {rol === 'admin' ? 'PANEL ADMIN' : 'ZONA JUGADOR'}
+        {/* --- BARRA LATERAL --- */}
+        <div className="sidebar" style={{borderColor: esAdmin ? '#d4af37' : '#00ff88'}}>
+          <h1 style={{color: esAdmin ? '#d4af37' : '#00ff88'}}>
+            {esAdmin ? 'PANEL ADMIN' : 'ZONA JUEGO'}
           </h1>
-          
-          <nav>
-            {/* ENLACES COMUNES */}
-            <Link to="/dashboard" className="nav-link">🏠 Inicio</Link>
 
+          <nav>
+            <Link to="/dashboard" className="nav-link">🏠 Inicio</Link>
+            
             {/* MENÚ DE ADMINISTRADOR */}
-            {rol === 'admin' && (
+            {esAdmin && (
               <>
-                <div style={{opacity:0.5, marginTop:10, fontSize:12}}>GESTIÓN</div>
+                <div style={{fontSize:'0.7rem', color:'#666', marginTop:15, marginBottom:5}}>GESTIÓN</div>
                 <Link to="/usuarios" className="nav-link">👤 Usuarios</Link>
-                <Link to="/eventos" className="nav-link">🏆 Torneos (Edit)</Link>
-                <Link to="/juegos" className="nav-link">🎰 Juegos</Link>
-                <Link to="/sesiones" className="nav-link">⏱️ Control Sesiones</Link>
-                <Link to="/apuestas" className="nav-link">🎲 Apuestas</Link>
-                <Link to="/transacciones" className="nav-link">📜 Transacciones</Link>
+                <Link to="/torneos-gestion" className="nav-link">🏆 Torneos (Edit)</Link>
+                <Link to="/juegos-gestion" className="nav-link">🎰 Juegos</Link>
+                <Link to="/sesiones-global" className="nav-link">⏱️ Sesiones</Link>
+                <Link to="/finanzas" className="nav-link">💰 Transacciones</Link>
               </>
             )}
 
             {/* MENÚ DE JUGADOR */}
-            {rol === 'jugador' && (
+            {!esAdmin && (
               <>
-                 <div style={{opacity:0.5, marginTop:10, fontSize:12}}>DIVERSIÓN</div>
-                 <Link to="/mis-torneos" className="nav-link">🏆 Torneos Disp.</Link>
-                 <Link to="/catalogo" className="nav-link">🎰 Jugar</Link>
-                 <Link to="/perfil" className="nav-link">👤 Mi Perfil</Link>
-                 <Link to="/transacciones" className="nav-link">📜 Mis Movimientos</Link>
-                 <Link to="/apuestas" className="nav-link">🎲 Apuestas</Link>
+                <div style={{fontSize:'0.7rem', color:'#666', marginTop:15, marginBottom:5}}>JUGAR</div>
+                <Link to="/mis-torneos" className="nav-link">🏆 Torneos</Link>
+                <Link to="/mis-apuestas" className="nav-link">🎲 Mis Apuestas</Link> {/* <--- AÑADIDO */}
+                <Link to="/casino" className="nav-link">🎰 Sala de Juegos</Link>
+                <Link to="/mi-perfil" className="nav-link">👤 Mi Perfil</Link>
               </>
             )}
-
-            <button 
-              onClick={() => { setRol(null); localStorage.removeItem('casino_rol'); }}
-              style={{marginTop: 'auto', background: 'transparent', border:'1px solid #555', color:'white', width:'100%', padding:10, cursor:'pointer'}}
-            >
-              Cerrar Sesión
-            </button>
           </nav>
+
+          <div style={{marginTop: 'auto', borderTop:'1px solid #333', paddingTop:10}}>
+             <div style={{fontSize:'0.8rem', color:'#888', marginBottom:5}}>Conectado como:</div>
+             <div style={{fontWeight:'bold', marginBottom:10}}>{usuario.nombre}</div>
+             <button onClick={logout} className="btn" style={{width:'100%', background:'#333', color:'white', fontSize:'0.8rem'}}>
+               Cerrar Sesión
+             </button>
+          </div>
         </div>
 
-        {/* --- CONTENIDO --- */}
+        {/* --- RUTAS (Aquí estaba el fallo, faltaban las definiciones) --- */}
         <div className="content">
           <Routes>
-            <Route path="/dashboard" element={<Home />} />
+            <Route path="/dashboard" element={<Home usuario={usuario} />} />
             
-            {/* RUTAS DE ADMIN */}
-            {rol === 'admin' && (
+            {/* Rutas de Admin */}
+            {esAdmin && (
               <>
-                <Route path="/eventos" element={<TorneosAdmin />} />
-                {/* Aquí irían las rutas de tus compañeros (modo admin) */}
-                <Route path="/sesiones" element={<Sesiones />} />
-                <Route path="/transacciones" element={<ListaTransacciones />} />
-                <Route path="/apuestas" element={<Apuestas />} />
+                <Route path="/torneos-gestion" element={<TorneosAdmin />} />
+                {/* <Route path="/usuarios" element={<UsuariosAdmin />} /> */}
+                
+                {/* 👇 ESTAS FALTABAN: 👇 */}
+                <Route path="/sesiones-global" element={<Sesiones />} />
+                <Route path="/finanzas" element={<ListaTransacciones />} />
               </>
             )}
 
-            {/* RUTAS DE JUGADOR */}
-            {rol === 'jugador' && (
+            {/* Rutas de Jugador */}
+            {!esAdmin && (
               <>
                 <Route path="/mis-torneos" element={<TorneosJugador />} />
-                {/* Aquí irían las rutas de jugar */}
-                <Route path="/transacciones" element={<ListaTransacciones />} />
-                <Route path="/apuestas" element={<Apuestas />} />
+                
+                {/* 👇 ESTA FALTABA: 👇 */}
+                <Route path="/mis-apuestas" element={<Apuestas />} />
+                
+                {/* <Route path="/casino" element={<Casino />} /> */}
               </>
             )}
 
-            <Route path="*" element={<Navigate to="/dashboard" />} />
+            <Route path="*" element={<Navigate to={esAdmin ? "/dashboard" : "/mis-torneos"} />} />
           </Routes>
         </div>
+
       </div>
     </BrowserRouter>
   );

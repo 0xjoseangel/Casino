@@ -1,8 +1,11 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .models import Jugador
-from .serializers import JugadorSerializer
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from .models import Jugador, Administrador
+from .serializers import JugadorSerializer, AdministradorSerializer
+
 
 class JugadorViewSet(viewsets.ModelViewSet):
     queryset = Jugador.objects.filter(baja=False)
@@ -34,3 +37,53 @@ class JugadorViewSet(viewsets.ModelViewSet):
             jugador.save()
             return Response({'message': 'Baja realizada correctamente'}, status=status.HTTP_200_OK)
         return Response({'error': 'Credenciales o código incorrectos'}, status=status.HTTP_400_BAD_REQUEST)
+
+class AdministradorViewSet(viewsets.ModelViewSet):
+    queryset = Administrador.objects.filter(baja=False)
+    serializer_class = AdministradorSerializer
+    
+# LOGIN UNIFICADO (JUGADORES Y ADMINS)
+@api_view(['POST'])
+@permission_classes([AllowAny]) # Permitimos entrar a cualquiera para intentar loguearse
+def login_view(request):
+    dni = request.data.get('dni')
+    password = request.data.get('contrasena') # O 'password', según mande el front
+
+    if not dni or not password:
+        return Response({'error': 'Faltan credenciales'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # 1. BUSCAR EN ADMINISTRADORES
+    try:
+        admin = Administrador.objects.get(dni=dni)
+        if admin.contrasena == password: # Nota: En producción usaríamos hash, para la práctica vale texto plano
+            return Response({
+                'exito': True,
+                'rol': 'admin',
+                'usuario': {
+                    'dni': admin.dni,
+                    'nombre': admin.nombre,
+                    'email': admin.email
+                }
+            }, status=status.HTTP_200_OK)
+    except Administrador.DoesNotExist:
+        pass # No es admin, seguimos buscando
+
+    # 2. BUSCAR EN JUGADORES
+    try:
+        jugador = Jugador.objects.get(dni=dni)
+        if jugador.contrasena == password:
+            return Response({
+                'exito': True,
+                'rol': 'jugador',
+                'usuario': {
+                    'dni': jugador.dni,
+                    'nombre': jugador.nombre,
+                    'email': jugador.email,
+                    'cartera': jugador.cartera_monetaria
+                }
+            }, status=status.HTTP_200_OK)
+    except Jugador.DoesNotExist:
+        pass
+
+    # SI LLEGAMOS AQUÍ, NO EXISTE O CONTRASEÑA MAL
+    return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
