@@ -3,7 +3,7 @@ CREATE OR REPLACE TRIGGER TRG_CHECK_DNI_JUGADOR
 BEFORE INSERT OR UPDATE ON JUGADOR
 FOR EACH ROW
 BEGIN
-    IF NOT REGEXP_LIKE(:NEW.dni, '^\d{8}[A-Z]$') THEN
+    IF NOT REGEXP_LIKE(:NEW.dni, '^[0-9]{8}[A-Z]$') THEN
         RAISE_APPLICATION_ERROR(-20001, 'El DNI del jugador debe tener 8 números y una letra mayúscula.');
     END IF;
 END;
@@ -28,7 +28,7 @@ CREATE OR REPLACE TRIGGER TRG_CHECK_DNI_ADMIN
 BEFORE INSERT OR UPDATE ON ADMINISTRADOR
 FOR EACH ROW
 BEGIN
-    IF NOT REGEXP_LIKE(:NEW.dni, '^\d{8}[A-Z]$') THEN
+    IF NOT REGEXP_LIKE(:NEW.dni, '^[0-9]{8}[A-Z]$') THEN
         RAISE_APPLICATION_ERROR(-20003, 'El DNI del administrador debe tener 8 números y una letra mayúscula.');
     END IF;
 END;

@@ -10,6 +10,7 @@ from .serializers import JugadorSerializer, AdministradorSerializer
 class JugadorViewSet(viewsets.ModelViewSet):
     queryset = Jugador.objects.filter(baja=False)
     serializer_class = JugadorSerializer
+    permission_classes = [AllowAny]
 
     #RF1.1: Registro de jugador
     def registro_jugador(self, request, *args, **kwargs):
@@ -79,7 +80,7 @@ def login_view(request):
                     'dni': jugador.dni,
                     'nombre': jugador.nombre,
                     'email': jugador.email,
-                    'cartera': jugador.cartera_monetaria
+                    'cartera_monetaria': jugador.cartera_monetaria
                 }
             }, status=status.HTTP_200_OK)
     except Jugador.DoesNotExist:

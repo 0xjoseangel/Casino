@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.permissions import AllowAny
 from django.db import transaction
 from .models import Transaccion, Apuesta
 from .serializers import TransaccionSerializer, ApuestaSerializer
@@ -16,30 +17,36 @@ class TransaccionViewSet(viewsets.ModelViewSet):
     # y es el que realmente aplicará el filtro de seguridad.
     queryset = Transaccion.objects.all().order_by('-fecha')
     serializer_class = TransaccionSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         """
-        Filtro de seguridad:
-        - Admin: Ve todo.
-        - Jugador: Ve solo sus movimientos.
+        Filtro adaptado para el frontend personalizado:
+        - Admin: Puede ver todo, PERO si especifica usuario, filtramos por él.
+        - Jugador: Solo ve lo suyo.
         """
-        user = self.request.user
+        rol_param = self.request.query_params.get('rol')
+        usuario_param = self.request.query_params.get('usuario')
 
-        # 1. Si no está autenticado, no ve nada (por seguridad)
-        if not user.is_authenticated:
-            return Transaccion.objects.none()
-
-        # 2. Si es Administrador, lo ve todo
-        if user.is_staff or user.is_superuser:
+        # 1. ¿Es Administrador?
+        if rol_param == 'admin' or self.request.user.is_staff:
+            # Si el admin quiere filtrar por un usuario específico:
+            if usuario_param:
+                return Transaccion.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
+            # Si no filtra, ve todo
             return Transaccion.objects.all().order_by('-fecha')
-        
-        # 3. Si es Jugador normal, filtramos
-        try:
-            # Intentamos filtrar por DNI si el username coincide con el DNI
-            return Transaccion.objects.filter(usuario__dni=user.username).order_by('-fecha')
-        except:
-            # Si falla, devolvemos lista vacía
-            return Transaccion.objects.none()
+
+        # 2. ¿Es Jugador normal?
+        if usuario_param:
+             # Solo puede ver SU DNI (aunque aquí confiamos en el param porque es entorno local de práctica)
+             # En prod real validaríamos que request.user == usuario_param
+             return Transaccion.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
+
+        # 3. Fallback (auth estándar)
+        if self.request.user.is_authenticated:
+             return Transaccion.objects.filter(usuario__dni=self.request.user.username).order_by('-fecha')
+
+        return Transaccion.objects.none()
 
     def perform_create(self, serializer):
         with transaction.atomic():
@@ -83,31 +90,86 @@ class TransaccionViewSet(viewsets.ModelViewSet):
 class ApuestaViewSet(viewsets.ModelViewSet):
     queryset = Apuesta.objects.all().order_by('-fecha')
     serializer_class = ApuestaSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        rol_param = self.request.query_params.get('rol')
+        usuario_param = self.request.query_params.get('usuario')
+
+        # 1. Admin
+        if rol_param == 'admin' or self.request.user.is_staff:
+            if usuario_param:
+                return Apuesta.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
+            return Apuesta.objects.all().order_by('-fecha')
+
+        # 2. Jugador
+        if usuario_param:
+            return Apuesta.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
+            
+        return Apuesta.objects.none()
 
     def perform_create(self, serializer):
+        import random
+        from decimal import Decimal
+
         with transaction.atomic():
             # 1. Obtener datos básicos
             usuario_apostador = serializer.validated_data['usuario']
+            juego = serializer.validated_data['juego']
+            cantidad = serializer.validated_data['cantidad_apostada']
             sesion_activa = None
 
-            # 2. LÓGICA DE VINCULACIÓN DE SESIÓN (El "Pegamento" con Miguel Ángel)
-            # Buscamos si hay una sesión activa para ese jugador
+            # 2. VINCULACIÓN DE SESIÓN
             if Sesion:
                 sesion_activa = Sesion.objects.filter(usuario=usuario_apostador, activa=True).first()
 
-            # 3. Guardamos la apuesta vinculándola a la sesión (si existe)
+            # 3. Guardamos la apuesta INICIAL (sin ganancia aun)
             apuesta = serializer.save(sesion=sesion_activa)
             
-            # 4. LÓGICA DE COBRO (Tu parte)
+            # 4. LÓGICA DE JUEGO (Probabilidad y Multiplicadores)
+            # Definir multiplicadores y probabilidad (1/X)
+            multiplicador = 2.0 # Default
+            probabilidad = 0.5  # Default
+            
+            nombre_juego = juego.nombre.lower()
+            
+            if 'ruleta' in nombre_juego:
+                multiplicador = 36.0
+                probabilidad = 1.0 / 36.0
+            elif 'blackjack' in nombre_juego:
+                multiplicador = 2.5 # Blackjack paga 3a2 o similar, simplificado x2.5 para dar juego
+                probabilidad = 0.45 
+            elif 'poker' in nombre_juego:
+                multiplicador = 5.0
+                probabilidad = 0.20
+            elif 'tragaperras' in nombre_juego or 'slot' in nombre_juego:
+                multiplicador = 10.0
+                probabilidad = 0.10
+            
+            # Tirada de suerte
+            suerte = random.random() # 0.0 a 1.0
+            ganancia = 0
+            
+            print(f"🎲 JUEGO: {juego.nombre} | APUESTA: {cantidad} | MULT: x{multiplicador} | PROB: {probabilidad:.4f} | RND: {suerte:.4f}")
+
+            if suerte < probabilidad:
+                # GANADOR
+                ganancia = cantidad * Decimal(str(multiplicador)) # Decimal conversion for safety
+                print(f"   🎉 ¡GANADOR! Premio: {ganancia}")
+            else:
+                print("   ❌ No hubo suerte")
+
+            # Actualizar la apuesta con la ganancia
+            apuesta.ganancia = ganancia
+            apuesta.save()
+
+            # 5. ACTUALIZAR CARTERA USUARIO
             usuario = apuesta.usuario
+            # Restar lo apostado
+            usuario.cartera_monetaria -= cantidad
+            # Sumar ganancia (si hubo)
+            usuario.cartera_monetaria += ganancia
             
-            # Restar apuesta
-            usuario.cartera_monetaria -= apuesta.cantidad_apostada
-            
-            # Sumar ganancia inmediata (si la hubiera)
-            if apuesta.ganancia > 0:
-                usuario.cartera_monetaria += apuesta.ganancia
-                
             usuario.save()
 
     def perform_update(self, serializer):

@@ -54,6 +54,10 @@ class ApuestaSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La apuesta debe ser mayor a 0.")
 
         # 2. Verificar saldo (Usamos cartera_monetaria)
+        # Force refresh from DB to be absolutely sure
+        usuario.refresh_from_db()
+        print(f"DEBUG VALIDATE: Cartera DB={usuario.cartera_monetaria} (Type: {type(usuario.cartera_monetaria)}), Cantidad={cantidad} (Type: {type(cantidad)})")
+        
         if usuario.cartera_monetaria < cantidad:
             raise serializers.ValidationError(
                 f"No tienes fichas suficientes. Tienes {usuario.cartera_monetaria}€ y quieres apostar {cantidad}€."

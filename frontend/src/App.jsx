@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react
 import './App.css';
 
 // Páginas importadas
+// Páginas importadas
 import Login from './pages/login';
 import TorneosAdmin from './pages/torneos';
 import TorneosJugador from './pages/torneosJugador';
@@ -12,6 +13,7 @@ import ListaTransacciones from './pages/listaTransacciones';
 import Apuestas from './pages/apuestas';
 import PromocionesAdmin from './pages/promocionesAdmin';
 import PromocionesJugador from './pages/promocionesJugador';
+import TransaccionesJugador from './pages/transaccionesJugador';
 
 // Componente NavLink con estado activo
 function NavItem({ to, icon, children }) {
@@ -61,6 +63,7 @@ function AppContent({ usuario, logout }) {
               <div className="nav-section-label">Jugar</div>
               <NavItem to="/mis-torneos" icon="🏆">Torneos</NavItem>
               <NavItem to="/mis-apuestas" icon="🎲">Mis Apuestas</NavItem>
+              <NavItem to="/transacciones" icon="💳">Transacciones</NavItem>
               <NavItem to="/casino" icon="🎰">Sala de Juegos</NavItem>
               <NavItem to="/mi-perfil" icon="👤">Mi Perfil</NavItem>
               <NavItem to="/promociones" icon="🎁">Ofertas</NavItem>
@@ -99,6 +102,7 @@ function AppContent({ usuario, logout }) {
             <>
               <Route path="/mis-torneos" element={<TorneosJugador />} />
               <Route path="/mis-apuestas" element={<Apuestas />} />
+              <Route path="/transacciones" element={<TransaccionesJugador />} />
               <Route path="/promociones" element={<PromocionesJugador />} />
             </>
           )}

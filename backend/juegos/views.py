@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from .models import Juego
 from .serializers import JuegoSerializer
 
@@ -10,6 +11,7 @@ class JuegoViewSet(viewsets.ModelViewSet):
     # "Solo se listarán juegos cuyo Estado sea Activo"
     queryset = Juego.objects.filter(estado=True)
     serializer_class = JuegoSerializer
+    permission_classes = [AllowAny]
 
     # RF2.2: Deshabilitar juego
     # A diferencia del Jugador, aquí no pedimos password porque lo hace un administrador logueado
