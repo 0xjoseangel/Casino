@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { getData } from '../services/api';
 
 function Home({ usuario }) {
   const [rol, setRol] = useState(null);
+  const [saldo, setSaldo] = useState(0);
+  const [apuestasCount, setApuestasCount] = useState(0);
 
   useEffect(() => {
+    // Determinar ROL
     if (usuario?.rol) {
       setRol(usuario.rol);
     } else {
@@ -14,7 +18,34 @@ function Home({ usuario }) {
         setRol(parsed.rol);
       }
     }
+
+    // Cargar Datos si es JUGADOR (y tenemos usuario)
+    if (usuario && usuario.rol !== 'admin') {
+      cargarDatosJugador(usuario);
+    }
   }, [usuario]);
+
+  const cargarDatosJugador = async (user) => {
+    // 1. Cargar Saldo Fresco
+    // Intentamos obtener perfil fresco
+    const resJug = await getData('usuarios/jugadores/');
+    if (resJug && Array.isArray(resJug)) {
+      const miPerfil = resJug.find(j => j.dni === user.dni);
+      if (miPerfil) {
+        setSaldo(miPerfil.cartera_monetaria);
+      } else {
+        setSaldo(user.cartera_monetaria || 0); // Fallback
+      }
+    } else {
+      setSaldo(user.cartera_monetaria || 0);
+    }
+
+    // 2. Cargar Apuestas Realizadas (Cantidad)
+    const resApuestas = await getData(`movimientos/apuestas/?usuario=${user.dni}`);
+    if (resApuestas && Array.isArray(resApuestas)) {
+      setApuestasCount(resApuestas.length);
+    }
+  };
 
   const esAdmin = rol === 'admin';
 
@@ -86,11 +117,11 @@ function Home({ usuario }) {
           <div className="stats-grid">
             <div className="stat-card">
               <h3>Mi Saldo</h3>
-              <p className="stat-number neon">150.00</p>
+              <p className="stat-number neon">{saldo}€</p>
             </div>
             <div className="stat-card">
               <h3>Mis Apuestas</h3>
-              <p className="stat-number">3 Activas</p>
+              <p className="stat-number">{apuestasCount} Realizadas</p>
             </div>
             <div className="stat-card">
               <h3>Torneos Inscritos</h3>
@@ -100,6 +131,11 @@ function Home({ usuario }) {
 
           <h2 className="section-title">¿A qué quieres jugar hoy?</h2>
           <div className="modules-grid">
+            <Link to="/transacciones" className="module-card highlight-gold">
+              <div className="icon">💳</div>
+              <h3 className="text-gold">Transacciones</h3>
+              <p>Depósitos y Retiros</p>
+            </Link>
             <Link to="/mis-torneos" className="module-card highlight-neon">
               <div className="icon">🏆</div>
               <h3 className="text-neon">Torneos</h3>
@@ -113,11 +149,6 @@ function Home({ usuario }) {
             <div className="module-card disabled">
               <div className="icon">🎰</div>
               <h3>Tragaperras</h3>
-              <p>Próximamente</p>
-            </div>
-            <div className="module-card disabled">
-              <div className="icon">🃏</div>
-              <h3>Blackjack</h3>
               <p>Próximamente</p>
             </div>
           </div>
