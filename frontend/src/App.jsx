@@ -100,7 +100,7 @@ function AppContent({ usuario, logout }) {
           {/* Rutas de Jugador */}
           {!esAdmin && (
             <>
-              <Route path="/mis-torneos" element={<TorneosJugador />} />
+              <Route path="/mis-torneos" element={<TorneosJugador usuario={usuario} />} />
               <Route path="/mis-apuestas" element={<Apuestas />} />
               <Route path="/transacciones" element={<TransaccionesJugador />} />
               <Route path="/promociones" element={<PromocionesJugador />} />

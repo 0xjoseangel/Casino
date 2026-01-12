@@ -4,14 +4,16 @@ import { getData, postData } from '../services/api';
 function PromocionesAdmin() {
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalInscritos, setModalInscritos] = useState(null);
 
   const [form, setForm] = useState({
     nombre: '',
-    descripcion: '',
-    codigo: '',
-    descuento: 10,
+    tipo: 'Bono de Bienvenida',
     fecha_inicio: '',
     fecha_fin: '',
+    condiciones: '',
+    beneficio: '10%',
+    max_jugadores: 0,
     estado: false
   });
 
@@ -32,30 +34,66 @@ function PromocionesAdmin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (form.fecha_inicio && form.fecha_fin) {
+      if (new Date(form.fecha_fin) < new Date(form.fecha_inicio)) {
+        alert('Error: La fecha de fin no puede ser anterior a la fecha de inicio');
+        return;
+      }
+    }
+
     const res = await postData('eventos/promociones/', form);
-    if (res && !res.error) {
-      alert('Promoción creada');
+    if (res && !res.error && !res.fecha_fin) {
+      alert('Promoción creada correctamente');
       setForm({
         nombre: '',
-        descripcion: '',
-        codigo: '',
-        descuento: 10,
+        tipo: 'Bono de Bienvenida',
         fecha_inicio: '',
         fecha_fin: '',
+        condiciones: '',
+        beneficio: '10%',
+        max_jugadores: 0,
         estado: false
       });
       cargarDatos();
     } else {
-      alert('Error al crear. Revisa fechas o campos.');
+      const mensaje = res?.fecha_fin?.[0] || res?.nombre?.[0] || 'Error al crear. Revisa los campos.';
+      alert(mensaje);
     }
   };
 
-  const cambiarEstado = async (id, accion) => {
-    const res = await postData(`eventos/promociones/${id}/${accion}/`, {});
-    if (res) {
-      alert(`Promoción ${accion === 'habilitar' ? 'habilitada' : 'finalizada'}`);
+  const habilitarPromo = async (id) => {
+    const res = await postData(`eventos/promociones/${id}/habilitar/`, {});
+    if (res && !res.error) {
+      alert(res.mensaje || 'Promoción habilitada');
       cargarDatos();
+    } else {
+      alert(res?.error || 'Error al habilitar');
     }
+  };
+
+  const finalizarPromo = async (id) => {
+    const res = await postData(`eventos/promociones/${id}/finalizar/`, {});
+    if (res && !res.error) {
+      alert(res.mensaje || 'Promoción finalizada');
+      cargarDatos();
+    } else {
+      alert(res?.error || 'Error al finalizar');
+    }
+  };
+
+  // Ver jugadores inscritos en la promoción
+  const verInscritos = async (id) => {
+    const res = await getData(`eventos/promociones/${id}/inscritos/`);
+    if (res && !res.error) {
+      setModalInscritos(res);
+    } else {
+      alert('Error al cargar los inscritos');
+    }
+  };
+
+  const cerrarModal = () => {
+    setModalInscritos(null);
   };
 
   return (
@@ -75,7 +113,7 @@ function PromocionesAdmin() {
             <label className="form-label">Nombre</label>
             <input
               name="nombre"
-              placeholder="Ej: Bono de Bienvenida"
+              placeholder="Ej: Bono de Bienvenida Enero"
               value={form.nombre}
               onChange={handleChange}
               required
@@ -83,50 +121,47 @@ function PromocionesAdmin() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Código</label>
+            <label className="form-label">Tipo</label>
+            <select name="tipo" value={form.tipo} onChange={handleChange} required>
+              <option value="Bono de Bienvenida">Bono de Bienvenida</option>
+              <option value="Tiradas Gratis">Tiradas Gratis</option>
+              <option value="Cashback">Cashback</option>
+            </select>
+          </div>
+
+          <div className="form-group full-width">
+            <label className="form-label">Condiciones/Requisitos</label>
+            <textarea
+              name="condiciones"
+              placeholder="Describe las condiciones de la promoción..."
+              value={form.condiciones}
+              onChange={handleChange}
+              rows={3}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Beneficio</label>
             <input
-              name="codigo"
-              placeholder="Ej: BONO50"
-              value={form.codigo}
+              name="beneficio"
+              placeholder="Ej: 10% o 20€"
+              value={form.beneficio}
               onChange={handleChange}
               required
             />
           </div>
 
-          <div className="form-group full-width">
-            <label className="form-label">Descripción</label>
-            <textarea
-              name="descripcion"
-              placeholder="Describe la promoción..."
-              value={form.descripcion}
-              onChange={handleChange}
-              rows={3}
-            />
-          </div>
-
           <div className="form-group">
-            <label className="form-label">Descuento (%)</label>
+            <label className="form-label">Máx. Jugadores (0 = ilimitado)</label>
             <input
-              name="descuento"
+              name="max_jugadores"
               type="number"
-              placeholder="10"
-              value={form.descuento}
+              min="0"
+              placeholder="0"
+              value={form.max_jugadores}
               onChange={handleChange}
             />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Estado Inicial</label>
-            <div className="flex gap-sm" style={{ height: '48px', alignItems: 'center' }}>
-              <input
-                type="checkbox"
-                name="estado"
-                checked={form.estado}
-                onChange={handleChange}
-                style={{ width: 'auto' }}
-              />
-              <span className="text-secondary">Activar inmediatamente</span>
-            </div>
           </div>
 
           <div className="form-group">
@@ -149,6 +184,20 @@ function PromocionesAdmin() {
               onChange={handleChange}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Estado Inicial</label>
+            <div className="flex gap-sm" style={{ height: '48px', alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                name="estado"
+                checked={form.estado}
+                onChange={handleChange}
+                style={{ width: 'auto' }}
+              />
+              <span className="text-secondary">Activar inmediatamente</span>
+            </div>
           </div>
 
           <div className="full-width">
@@ -174,8 +223,8 @@ function PromocionesAdmin() {
               <thead>
                 <tr>
                   <th>Nombre</th>
-                  <th>Código</th>
-                  <th>Descuento</th>
+                  <th>Tipo</th>
+                  <th>Beneficio</th>
                   <th>Fechas</th>
                   <th>Estado</th>
                   <th>Acciones</th>
@@ -185,8 +234,8 @@ function PromocionesAdmin() {
                 {promos.map(p => (
                   <tr key={p.id}>
                     <td>{p.nombre}</td>
-                    <td><span className="text-gold">{p.codigo}</span></td>
-                    <td>{p.descuento}%</td>
+                    <td><span className="text-gold">{p.tipo}</span></td>
+                    <td>{p.beneficio}</td>
                     <td className="text-muted">{p.fecha_inicio} - {p.fecha_fin}</td>
                     <td>
                       <span className={`badge ${p.estado ? 'badge-success' : 'badge-error'}`}>
@@ -194,21 +243,29 @@ function PromocionesAdmin() {
                       </span>
                     </td>
                     <td>
-                      {!p.estado ? (
+                      <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
                         <button
-                          onClick={() => cambiarEstado(p.id, 'habilitar')}
-                          className="btn btn-neon btn-sm"
+                          onClick={() => verInscritos(p.id)}
+                          className="btn btn-gold btn-sm"
                         >
-                          Habilitar
+                          Ver Inscritos
                         </button>
-                      ) : (
-                        <button
-                          onClick={() => cambiarEstado(p.id, 'finalizar')}
-                          className="btn btn-secondary btn-sm"
-                        >
-                          Finalizar
-                        </button>
-                      )}
+                        {!p.estado ? (
+                          <button
+                            onClick={() => habilitarPromo(p.id)}
+                            className="btn btn-neon btn-sm"
+                          >
+                            Habilitar
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => finalizarPromo(p.id)}
+                            className="btn btn-secondary btn-sm"
+                          >
+                            Finalizar
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -222,6 +279,106 @@ function PromocionesAdmin() {
           </div>
         )}
       </div>
+
+      {/* MODAL DE INSCRITOS */}
+      {modalInscritos && (
+        <div className="modal-overlay" onClick={cerrarModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Jugadores Inscritos - {modalInscritos.promocion}</h3>
+              <button className="modal-close" onClick={cerrarModal}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="mb-lg">
+                <span>Total inscritos: <strong className="text-gold">{modalInscritos.total_inscritos}</strong></span>
+              </div>
+
+              {modalInscritos.inscritos.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>DNI</th>
+                      <th>Nombre</th>
+                      <th>Email</th>
+                      <th>Fecha Inscripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modalInscritos.inscritos.map((j, idx) => (
+                      <tr key={idx}>
+                        <td>{j.dni}</td>
+                        <td>{j.nombre} {j.apellidos}</td>
+                        <td>{j.email}</td>
+                        <td>{new Date(j.fecha_inscripcion).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="empty-state">
+                  <p>No hay jugadores inscritos en esta promoción.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Estilos del modal inline */}
+      <style>{`
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .modal-content {
+          background: var(--bg-card);
+          border-radius: 12px;
+          max-width: 700px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          border: 1px solid var(--border);
+        }
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px;
+          border-bottom: 1px solid var(--border);
+        }
+        .modal-header h3 {
+          margin: 0;
+          color: var(--gold);
+        }
+        .modal-close {
+          background: none;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
+          color: var(--text-secondary);
+        }
+        .modal-close:hover {
+          color: var(--text);
+        }
+        .modal-body {
+          padding: 20px;
+        }
+        .btn-gold {
+          background: linear-gradient(135deg, var(--gold), #b8860b);
+          color: #000;
+        }
+        .btn-gold:hover {
+          opacity: 0.9;
+        }
+      `}</style>
     </div>
   );
 }

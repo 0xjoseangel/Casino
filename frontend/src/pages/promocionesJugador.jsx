@@ -12,7 +12,8 @@ function PromocionesJugador() {
   const cargarPromos = async () => {
     const data = await getData('eventos/promociones/');
     if (Array.isArray(data)) {
-      setPromos(data);
+      // Mostrar solo promociones activas al jugador
+      setPromos(data.filter(p => p.estado === true));
     }
     setLoading(false);
   };
@@ -35,33 +36,29 @@ function PromocionesJugador() {
       {promos.length > 0 ? (
         <div className="modules-grid">
           {promos.map(p => (
-            <div
-              key={p.id}
-              className={`card ${p.estado ? 'highlight-neon' : ''}`}
-              style={{ opacity: p.estado ? 1 : 0.6 }}
-            >
+            <div key={p.id} className="card highlight-neon">
               <div className="flex-between mb-md">
                 <h3 className="card-title">{p.nombre}</h3>
                 <span className="text-gold" style={{ fontSize: '1.5rem' }}>
-                  {p.descuento}%
+                  {p.beneficio}
                 </span>
               </div>
 
-              <p className="text-muted mb-lg">{p.descripcion}</p>
+              <p className="text-muted mb-md">{p.condiciones}</p>
 
               <div className="card" style={{ background: 'var(--bg-light)', textAlign: 'center', padding: '16px' }}>
-                <span className="text-muted" style={{ fontSize: '0.75rem' }}>CÓDIGO</span>
-                <div className="text-gold" style={{ fontSize: '1.25rem', fontWeight: 'bold', letterSpacing: '2px', marginTop: '4px' }}>
-                  {p.codigo}
+                <span className="text-muted" style={{ fontSize: '0.75rem' }}>TIPO</span>
+                <div className="text-gold" style={{ fontSize: '1rem', fontWeight: 'bold', marginTop: '4px' }}>
+                  {p.tipo}
                 </div>
               </div>
 
               <div className="flex-between mt-lg">
                 <span className="text-muted" style={{ fontSize: '0.85rem' }}>
-                  Válido hasta: {p.fecha_fin}
+                  Válido: {p.fecha_inicio} - {p.fecha_fin}
                 </span>
-                <span className={`badge ${p.estado ? 'badge-success' : 'badge-error'}`}>
-                  {p.estado ? 'DISPONIBLE' : 'EXPIRADA'}
+                <span className="badge badge-success">
+                  DISPONIBLE
                 </span>
               </div>
             </div>

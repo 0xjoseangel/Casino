@@ -1,34 +1,69 @@
 import { useEffect, useState } from 'react';
 import { getData, postData } from '../services/api';
 
-function TorneosJugador() {
+function TorneosJugador({ usuario }) {
   const [torneos, setTorneos] = useState([]);
+  const [misInscripciones, setMisInscripciones] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    cargarTorneos();
-  }, []);
+  // Obtener DNI del usuario logueado
+  const miDni = usuario?.dni;
 
-  const cargarTorneos = async () => {
-    const data = await getData('eventos/torneos/');
-    if (Array.isArray(data)) {
-      setTorneos(data);
+  useEffect(() => {
+    if (miDni) {
+      cargarDatos();
     }
+  }, [miDni]);
+
+  const cargarDatos = async () => {
+    setLoading(true);
+
+    // Cargar torneos
+    const dataTorneos = await getData('eventos/torneos/');
+    if (Array.isArray(dataTorneos)) {
+      setTorneos(dataTorneos);
+    }
+
+    // Cargar TODAS las inscripciones y filtrar las del usuario actual
+    const dataCompite = await getData('eventos/competiciones/');
+    if (Array.isArray(dataCompite)) {
+      // El campo 'jugador' en la API devuelve el DNI (que es la PK)
+      const misIds = dataCompite
+        .filter(c => String(c.jugador) === String(miDni))
+        .map(c => c.torneo);
+      setMisInscripciones(misIds);
+    }
+
     setLoading(false);
   };
 
   const inscribirse = async (idTorneo) => {
+    if (!miDni) {
+      alert('Error: No se pudo obtener tu DNI. Por favor, vuelve a iniciar sesión.');
+      return;
+    }
+
     const respuesta = await postData('eventos/competiciones/', {
       torneo: idTorneo,
-      jugador: '12345678X',
+      jugador: miDni,
       posicion: null
     });
 
-    if (respuesta && !respuesta.error) {
-      alert('Te has inscrito al torneo');
+    if (respuesta && !respuesta.error && respuesta.id) {
+      alert('Te has inscrito al torneo correctamente');
+      // Actualizar el estado local inmediatamente para cambiar el botón
+      setMisInscripciones(prev => [...prev, idTorneo]);
     } else {
-      alert('Error al inscribirse. Quizás ya estás apuntado.');
+      const mensaje = respuesta?.error ||
+                     respuesta?.non_field_errors?.[0] ||
+                     respuesta?.detail ||
+                     'Error al inscribirse. Quizás ya estás apuntado.';
+      alert(mensaje);
     }
+  };
+
+  const estaInscrito = (torneoId) => {
+    return misInscripciones.includes(torneoId);
   };
 
   if (loading) {
@@ -58,7 +93,21 @@ function TorneosJugador() {
                 <span className="text-gold">{t.premio}</span>
               </div>
 
-              {t.estado === 'programado' || t.estado === 'abierto' ? (
+              <div className="mb-md">
+                <span className={`badge ${
+                  t.estado === 'abierto' ? 'badge-success' :
+                  t.estado === 'programado' ? 'badge-info' :
+                  t.estado === 'en curso' ? 'badge-warning' : 'badge-error'
+                }`}>
+                  {t.estado.toUpperCase()}
+                </span>
+              </div>
+
+              {estaInscrito(t.id) ? (
+                <button className="btn btn-success btn-full" disabled>
+                  Ya inscrito
+                </button>
+              ) : (t.estado === 'programado' || t.estado === 'abierto') ? (
                 <button
                   onClick={() => inscribirse(t.id)}
                   className="btn btn-neon btn-full"
