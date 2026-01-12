@@ -10,6 +10,8 @@ import Home from './pages/home';
 import Sesiones from './pages/Sesiones';
 import ListaTransacciones from './pages/listaTransacciones';
 import Apuestas from './pages/apuestas';
+import PromocionesAdmin from './pages/promocionesAdmin';
+import PromocionesJugador from './pages/promocionesJugador';
 
 function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -56,6 +58,7 @@ function App() {
                 <Link to="/juegos-gestion" className="nav-link">🎰 Juegos</Link>
                 <Link to="/sesiones-global" className="nav-link">⏱️ Sesiones</Link>
                 <Link to="/finanzas" className="nav-link">💰 Transacciones</Link>
+                <Link to="/promociones-gestion" className="nav-link">🎁 Promociones</Link>
               </>
             )}
 
@@ -67,6 +70,7 @@ function App() {
                 <Link to="/mis-apuestas" className="nav-link">🎲 Mis Apuestas</Link> {/* <--- AÑADIDO */}
                 <Link to="/casino" className="nav-link">🎰 Sala de Juegos</Link>
                 <Link to="/mi-perfil" className="nav-link">👤 Mi Perfil</Link>
+                <Link to="/promociones" className="nav-link">🎁 Ofertas</Link>
               </>
             )}
           </nav>
@@ -94,6 +98,7 @@ function App() {
                 {/* 👇 ESTAS FALTABAN: 👇 */}
                 <Route path="/sesiones-global" element={<Sesiones />} />
                 <Route path="/finanzas" element={<ListaTransacciones />} />
+                <Route path="/promociones-gestion" element={<PromocionesAdmin />} />
               </>
             )}
 
@@ -102,8 +107,8 @@ function App() {
               <>
                 <Route path="/mis-torneos" element={<TorneosJugador />} />
                 
-                {/* 👇 ESTA FALTABA: 👇 */}
                 <Route path="/mis-apuestas" element={<Apuestas />} />
+                <Route path="/promociones" element={<PromocionesJugador />} />
                 
                 {/* <Route path="/casino" element={<Casino />} /> */}
               </>
