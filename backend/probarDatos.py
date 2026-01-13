@@ -104,16 +104,18 @@ def crear_torneos_y_participantes(juegos, jugadores):
         if dias < 0: estado = "finalizado"
         elif dias == 0: estado = "abierto"
 
-        t = Torneo.objects.create(
+        t, created = Torneo.objects.get_or_create(
             nombre=f"Torneo {juego.nombre} #{i+1}",
-            juego=juego,
-            fecha_inicio=fecha_ini,
-            hora_inicio="18:00",
-            precio_inscripcion=random.choice([10, 20, 50]),
-            aforo_maximo=50,
-            premio="1000",
-            estado=estado,
-            reglas="Reglas estándar"
+            defaults={
+                'juego': juego,
+                'fecha_inicio': fecha_ini,
+                'hora_inicio': "18:00",
+                'precio_inscripcion': random.choice([10, 20, 50]),
+                'aforo_maximo': 50,
+                'premio': "1000",
+                'estado': estado,
+                'reglas': "Reglas estándar"
+            }
         )
 
         if estado in ["programado", "abierto", "finalizado"]:
