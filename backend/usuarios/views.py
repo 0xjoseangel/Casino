@@ -8,12 +8,13 @@ from .serializers import JugadorSerializer, AdministradorSerializer
 
 
 class JugadorViewSet(viewsets.ModelViewSet):
-    queryset = Jugador.objects.filter(baja=False)
+    # Mostramos todos (activos y bajas) para que el admin pueda gestionar
+    queryset = Jugador.objects.all()
     serializer_class = JugadorSerializer
     permission_classes = [AllowAny]
 
-    #RF1.1: Registro de jugador
-    def registro_jugador(self, request, *args, **kwargs):
+    #RF1.1: Registro de jugador -> Override create
+    def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -72,6 +73,11 @@ def login_view(request):
     # 2. BUSCAR EN JUGADORES
     try:
         jugador = Jugador.objects.get(dni=dni)
+        
+        # Validar si está dado de baja
+        if jugador.baja:
+             return Response({'error': 'Usuario dado de baja. Contacte con soporte.'}, status=status.HTTP_403_FORBIDDEN)
+
         if jugador.contrasena == password:
             return Response({
                 'exito': True,

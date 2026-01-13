@@ -4,7 +4,10 @@ import './App.css';
 
 // Páginas importadas
 // Páginas importadas
+import AdminUsuarios from './pages/adminUsuarios';
 import Login from './pages/login';
+import CrearJugador from './pages/crearJugador';
+import MiPerfil from './pages/miPerfil';
 import TorneosAdmin from './pages/torneos';
 import TorneosJugador from './pages/torneosJugador';
 import Home from './pages/home';
@@ -94,6 +97,7 @@ function AppContent({ usuario, logout }) {
               <Route path="/sesiones-global" element={<Sesiones />} />
               <Route path="/finanzas" element={<ListaTransacciones />} />
               <Route path="/promociones-gestion" element={<PromocionesAdmin />} />
+              <Route path="/usuarios" element={<AdminUsuarios />} />
             </>
           )}
 
@@ -104,9 +108,11 @@ function AppContent({ usuario, logout }) {
               <Route path="/mis-apuestas" element={<Apuestas />} />
               <Route path="/transacciones" element={<TransaccionesJugador />} />
               <Route path="/promociones" element={<PromocionesJugador />} />
+              <Route path="/mi-perfil" element={<MiPerfil />} />
             </>
           )}
 
+          <Route path="/registro" element={<CrearJugador />} />
           <Route path="*" element={<Navigate to={esAdmin ? "/dashboard" : "/mis-torneos"} />} />
         </Routes>
       </main>
@@ -129,6 +135,7 @@ function App() {
     return (
       <BrowserRouter>
         <Routes>
+          <Route path="/registro" element={<CrearJugador />} />
           <Route path="*" element={<Login setUsuario={setUsuario} />} />
         </Routes>
       </BrowserRouter>
