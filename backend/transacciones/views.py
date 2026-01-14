@@ -172,6 +172,34 @@ class ApuestaViewSet(viewsets.ModelViewSet):
             
             usuario.save()
 
+            # --- RF: PROMOCIONES (CASHBACK) ---
+            from eventos.models import Promocion
+            import re
+            
+            # Buscar si el usuario participa en alguna promo de 'Cashback' activa
+            # Filter traverses: usuario -> participa -> promocion
+            promociones_activas = usuario.promociones.filter(
+                tipo='Cashback',
+                estado=True,
+                participa__promocion__estado=True # Asegurar doble check
+            )
+
+            for promo in promociones_activas:
+                # Interpretar beneficio (ej: "10%", "5%")
+                beneficio_str = promo.beneficio
+                porcentaje = 0
+                
+                # Extraer número del string "10%"
+                match = re.search(r'(\d+)', beneficio_str)
+                if match:
+                    porcentaje = int(match.group(1))
+                
+                if porcentaje > 0:
+                    cashback = cantidad * Decimal(porcentaje) / Decimal(100)
+                    usuario.cartera_monetaria += cashback
+                    usuario.save()
+                    print(f"   🎁 PROMO CASHBACK '{promo.nombre}': Devolviendo {cashback}€ ({porcentaje}%)")
+
     def perform_update(self, serializer):
         with transaction.atomic():
             apuesta_antigua = self.get_object()

@@ -8,6 +8,11 @@ class JugadorSerializer(serializers.ModelSerializer):
         model = Jugador
         fields = '__all__'
 
+class JugadorDetalleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Jugador
+        exclude = ['contrasena']
+
 class AdministradorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Administrador

@@ -19,6 +19,22 @@ export const postData = async (endpoint, data) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
+        // Devolvemos el JSON incluso si hay error (ej: 400 Bad Request) para leer los detalles
+        return await response.json();
+    } catch (error) {
+        console.error("Error API:", error);
+        return { error: true, detail: "Error de conexión con el servidor" };
+    }
+};
+
+// Función genérica para actualizar datos (PUT)
+export const putData = async (endpoint, data) => {
+    try {
+        const response = await fetch(`${API_URL}/${endpoint}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
         return await response.json();
     } catch (error) {
         console.error("Error API:", error);

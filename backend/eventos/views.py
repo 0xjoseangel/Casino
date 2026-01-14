@@ -161,6 +161,13 @@ class ParticipaViewSet(viewsets.ModelViewSet):
     serializer_class = ParticipaSerializer
     permission_classes = [AllowAny]
 
+    def get_queryset(self):
+        queryset = Participa.objects.all()
+        jugador = self.request.query_params.get('jugador')
+        if jugador:
+            queryset = queryset.filter(jugador__dni=jugador)
+        return queryset
+
 
 class CompiteViewSet(viewsets.ModelViewSet):
     """
