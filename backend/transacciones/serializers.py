@@ -14,6 +14,11 @@ class TransaccionSerializer(serializers.ModelSerializer):
         if cantidad <= 0:
             raise serializers.ValidationError("La cantidad debe ser positiva.")
 
+        # --- VALIDACIONES DE DEPÓSITO ---
+        if tipo == 'DEPOSITO':
+             if cantidad > 10000:
+                 raise serializers.ValidationError("El depósito máximo permitido es de 10.000€.")
+
         # --- VALIDACIONES DE RETIRO ---
         if tipo == 'RETIRO':
             if cantidad < 20:
@@ -53,7 +58,14 @@ class ApuestaSerializer(serializers.ModelSerializer):
         if cantidad <= 0:
             raise serializers.ValidationError("La apuesta debe ser mayor a 0.")
 
-        # 2. Verificar saldo (Usamos cartera_monetaria)
+
+        # 2. Rango de Apuestas (RF Nuevo)
+        if cantidad < 10:
+            raise serializers.ValidationError("La apuesta mínima es de 10€.")
+        if cantidad > 1000:
+            raise serializers.ValidationError("La apuesta máxima es de 1.000€.")
+
+        # 3. Verificar saldo (Usamos cartera_monetaria)
         # Force refresh from DB to be absolutely sure
         usuario.refresh_from_db()
         print(f"DEBUG VALIDATE: Cartera DB={usuario.cartera_monetaria} (Type: {type(usuario.cartera_monetaria)}), Cantidad={cantidad} (Type: {type(cantidad)})")

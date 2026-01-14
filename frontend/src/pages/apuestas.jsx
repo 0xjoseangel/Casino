@@ -120,8 +120,14 @@ function Apuestas() {
     const cantidadNum = parseFloat(form.cantidad_apostada);
 
     // Validaciones Locales
-    if (cantidadNum <= 0) {
-      alert('La apuesta debe ser mayor a 0.');
+    if (cantidadNum < 10) {
+      alert('La apuesta mínima es de 10€.');
+      setEnviando(false);
+      return;
+    }
+
+    if (cantidadNum > 1000) {
+      alert('La apuesta máxima es de 1.000€.');
       setEnviando(false);
       return;
     }
@@ -140,8 +146,16 @@ function Apuestas() {
 
     const resultado = await postData('movimientos/apuestas/', datosApuesta);
 
-    if (resultado && !resultado.error) {
-      alert('Apuesta realizada con éxito');
+    if (resultado && !resultado.error && resultado.id) {
+      // Verificar ganancia (viene del backend en la respuesta)
+      const ganancia = parseFloat(resultado.ganancia);
+
+      if (ganancia > 0) {
+        alert(`¡FELICIDADES! Has ganado ${ganancia}€`);
+      } else {
+        alert(`Lo siento, has perdido ${cantidadNum}€. ¡Suerte para la próxima!`);
+      }
+
       setForm({ juego: '', cantidad_apostada: '' });
       cargarDatos();
     } else {
@@ -250,11 +264,12 @@ function Apuestas() {
                   <label className="form-label">Cantidad a Apostar (€)</label>
                   <input
                     type="number"
-                    min="1"
+                    min="10"
+                    max="1000"
                     step="0.01"
                     value={form.cantidad_apostada}
                     onChange={(e) => setForm({ ...form, cantidad_apostada: e.target.value })}
-                    placeholder="Ej: 10.00"
+                    placeholder="Mín: 10€ - Máx: 1000€"
                     required
                   />
                 </div>

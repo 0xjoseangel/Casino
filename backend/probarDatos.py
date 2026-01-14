@@ -151,15 +151,22 @@ def crear_transacciones_y_apuestas(jugadores, juegos):
                 else:
                     tipo = 'DEPOSITO' # Fallback
             
-            Transaccion.objects.create(
-                usuario=jugador,
-                destinatario=destinatario,
-                tipo=tipo,
-                cantidad=cantidad,
-                fecha=timezone.now() - timedelta(days=random.randint(0, 60)),
-                estado='COMPLETADO',
-                metodo_pago=random.choice(metodos) if tipo != 'TRANSFERENCIA' else None
-            )
+            try:
+                Transaccion.objects.create(
+                    usuario=jugador,
+                    destinatario=destinatario,
+                    tipo=tipo,
+                    cantidad=cantidad,
+                    fecha=timezone.now() - timedelta(days=random.randint(0, 60)),
+                    estado='COMPLETADO',
+                    metodo_pago=random.choice(metodos) if tipo != 'TRANSFERENCIA' else None
+                )
+            except Exception as e:
+                # Si salta un trigger (saldo insuficiente, etc.), lo capturamos para que el script siga
+                if 'ORA-20' in str(e):
+                    print(f"  [INFO] Transacción de {tipo} ({cantidad}€) bloqueada por Trigger (Correcto).")
+                else:
+                    print(f"  [WARN] Error creando transacción: {e}")
 
     # 2. APUESTAS (Jugar)
     for jugador in jugadores:
@@ -173,15 +180,22 @@ def crear_transacciones_y_apuestas(jugadores, juegos):
             ganancia = apostado * 2 if gano else 0
             resultado = "Victoria" if gano else "Derrota"
             
-            Apuesta.objects.create(
-                usuario=jugador,
-                juego=juego,
-                sesion=None, # Dejamos esto en blanco si no tenemos sesiones creadas aún
-                fecha=timezone.now() - timedelta(minutes=random.randint(1, 5000)),
-                cantidad_apostada=apostado,
-                ganancia=ganancia,
-                resultado=resultado
-            )
+            try:
+                Apuesta.objects.create(
+                    usuario=jugador,
+                    juego=juego,
+                    sesion=None, 
+                    fecha=timezone.now() - timedelta(minutes=random.randint(1, 5000)),
+                    cantidad_apostada=apostado,
+                    ganancia=ganancia,
+                    resultado=resultado
+                )
+            except Exception as e:
+                # Capturar rechazos por trigger (ej: apuesta negativa, saldo insuficiente)
+                if 'ORA-20' in str(e):
+                    print(f"  [INFO] Apuesta de {apostado}€ bloqueada por Trigger (Correcto).")
+                else:
+                    print(f"  [WARN] Error creando apuesta: {e}")
 
 if __name__ == '__main__':
     try:

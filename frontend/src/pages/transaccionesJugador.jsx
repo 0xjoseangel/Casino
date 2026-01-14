@@ -64,6 +64,12 @@ function TransaccionesJugador() {
             return;
         }
 
+        // Validación depósito máximo
+        if (form.tipo === 'DEPOSITO' && cantidadNum > 10000) {
+            alert('⚠️ El depósito máximo permitido es de 10.000€.');
+            return;
+        }
+
         if ((form.tipo === 'RETIRO' || form.tipo === 'TRANSFERENCIA') && cantidadNum > usuario.cartera_monetaria) {
             alert('⚠️ Saldo insuficiente para realizar esta operación.');
             return;
