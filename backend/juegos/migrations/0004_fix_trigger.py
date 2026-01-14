@@ -18,7 +18,7 @@ def load_sql_from_file(filename):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('juegos', '0002_triggers'),
+        ('juegos', '0003_alter_juego_tipo'),
     ]
 
     operations = [
