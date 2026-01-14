@@ -17,6 +17,8 @@ import Apuestas from './pages/apuestas';
 import PromocionesAdmin from './pages/promocionesAdmin';
 import PromocionesJugador from './pages/promocionesJugador';
 import TransaccionesJugador from './pages/transaccionesJugador';
+import JuegosAdmin from './pages/juegosAdmin'; 
+import JuegosJugador from './pages/juegosJugador';
 
 // Componente NavLink con estado activo
 function NavItem({ to, icon, children }) {
@@ -67,7 +69,7 @@ function AppContent({ usuario, logout }) {
               <NavItem to="/mis-torneos" icon="🏆">Torneos</NavItem>
               <NavItem to="/mis-apuestas" icon="🎲">Mis Apuestas</NavItem>
               <NavItem to="/transacciones" icon="💳">Transacciones</NavItem>
-              <NavItem to="/casino" icon="🎰">Sala de Juegos</NavItem>
+              <NavItem to="/juegos" icon="🎰">Sala de Juegos</NavItem>
               <NavItem to="/mi-perfil" icon="👤">Mi Perfil</NavItem>
               <NavItem to="/promociones" icon="🎁">Ofertas</NavItem>
             </>
@@ -98,6 +100,7 @@ function AppContent({ usuario, logout }) {
               <Route path="/finanzas" element={<ListaTransacciones />} />
               <Route path="/promociones-gestion" element={<PromocionesAdmin />} />
               <Route path="/usuarios" element={<AdminUsuarios />} />
+              <Route path="/juegos-gestion" element={<JuegosAdmin />} />
             </>
           )}
 
@@ -108,6 +111,7 @@ function AppContent({ usuario, logout }) {
               <Route path="/mis-apuestas" element={<Apuestas />} />
               <Route path="/transacciones" element={<TransaccionesJugador />} />
               <Route path="/promociones" element={<PromocionesJugador />} />
+              <Route path="/juegos" element={<JuegosJugador />} />
               <Route path="/mi-perfil" element={<MiPerfil />} />
             </>
           )}

@@ -9,6 +9,7 @@ class Juego(models.Model):
     TIPO_CHOICES = [
         ('tragaperras', 'Tragaperras'),
         ('ruleta', 'Ruleta'),
+        ('cartas', 'Cartas'),
     ]
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
 
