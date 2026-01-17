@@ -10,16 +10,36 @@ END; -- django fix
 /
 
 -- Disparador para validar saldo suficiente para APOSTAR
+-- Disparador para validar saldo suficiente para APOSTAR (Validando SESIÓN)
 CREATE OR REPLACE TRIGGER TRG_CHECK_SALDO_APUESTA
 BEFORE INSERT ON "JUEGA"
 FOR EACH ROW
 DECLARE
-    v_saldo NUMBER;
+    v_saldo_inicio NUMBER;
+    v_apostado NUMBER;
+    v_ganado NUMBER;
+    v_saldo_actual NUMBER;
 BEGIN
-    SELECT "CARTERA_MONETARIA" INTO v_saldo FROM "JUGADOR" WHERE "DNI" = :NEW."USUARIO_ID";
-    
-    IF v_saldo < :NEW."CANTIDAD_APOSTADA" THEN
-        RAISE_APPLICATION_ERROR(-20021, 'Saldo insuficiente para realizar la apuesta.');
+    -- 1. Obtener datos de la sesión asociada
+    -- Si SESION_ID es NULL, saltará el otro trigger, así que aquí asumimos que existe o lo ignoramos si es null.
+    IF :NEW."SESION_ID" IS NOT NULL THEN
+        SELECT "SALDO_INICIO" INTO v_saldo_inicio 
+        FROM "SESION" 
+        WHERE "ID" = :NEW."SESION_ID";
+
+        -- 2. Calcular total apostado y ganado en esta sesión (excluyendo la actual que se está insertando)
+        SELECT COALESCE(SUM("CANTIDAD_APOSTADA"), 0), COALESCE(SUM("GANANCIA"), 0)
+        INTO v_apostado, v_ganado
+        FROM "JUEGA"
+        WHERE "SESION_ID" = :NEW."SESION_ID";
+
+        -- 3. Calcular saldo actual disponible
+        v_saldo_actual := v_saldo_inicio - v_apostado + v_ganado;
+
+        -- 4. Validar
+        IF v_saldo_actual < :NEW."CANTIDAD_APOSTADA" THEN
+            RAISE_APPLICATION_ERROR(-20021, 'No tienes fichas suficientes. Tienes ' || v_saldo_actual || '€ y quieres apostar ' || :NEW."CANTIDAD_APOSTADA" || '€.');
+        END IF;
     END IF;
 END; -- django fix
 /

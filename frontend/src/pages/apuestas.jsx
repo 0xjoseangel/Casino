@@ -13,6 +13,10 @@ function Apuestas() {
   const [esAdmin, setEsAdmin] = useState(false);
   const [filtroUsuario, setFiltroUsuario] = useState('');
 
+  // Estado de sesión
+  const [sesionActiva, setSesionActiva] = useState(false);
+  const [sesionData, setSesionData] = useState(null);
+
   const [form, setForm] = useState({
     juego: '',
     cantidad_apostada: ''
@@ -99,6 +103,23 @@ function Apuestas() {
       console.log("⚠️ API JUEGOS falló o vacía, usando fallback");
       setJuegos(JUEGOS_FALLBACK);
     }
+    // Cargar sesiones para comprobar si hay una activa
+    if (usuarioGuardado && !isAdmin) {
+      const usuario = JSON.parse(usuarioGuardado);
+      // Usamos el filtro que acabamos de implementar en el backend
+      const resSesion = await getData(`sesiones/listado/?usuario=${usuario.dni}&activa=true`);
+      if (resSesion && Array.isArray(resSesion) && resSesion.length > 0) {
+        setSesionActiva(true);
+        setSesionData(resSesion[0]);
+      } else {
+        setSesionActiva(false);
+        setSesionData(null);
+      }
+    } else {
+      // Admin o sin login -> no aplica (o admin siempre puede ver cosas pero no juega)
+      setSesionActiva(false);
+    }
+
     setLoading(false);
   };
 
@@ -132,10 +153,21 @@ function Apuestas() {
       return;
     }
 
-    if (jugador && cantidadNum > jugador.cartera_monetaria) {
-      alert('⚠️ Saldo insuficiente para realizar esta apuesta.');
-      setEnviando(false);
-      return;
+    // Validar Saldo
+    if (sesionActiva && sesionData) {
+      // Validar contra saldo de sesión
+      if (cantidadNum > parseFloat(sesionData.saldo_actual)) {
+        alert(`⚠️ Saldo de sesión insuficiente (${sesionData.saldo_actual}€).`);
+        setEnviando(false);
+        return;
+      }
+    } else {
+      // Validar contra saldo global (fallback, aunque no debería usarse si hay sesión obligatoria)
+      if (jugador && cantidadNum > jugador.cartera_monetaria) {
+        alert('⚠️ Saldo insuficiente en tu cartera.');
+        setEnviando(false);
+        return;
+      }
     }
 
     const datosApuesta = {
@@ -157,7 +189,7 @@ function Apuestas() {
       }
 
       setForm({ juego: '', cantidad_apostada: '' });
-      cargarDatos();
+      await cargarDatos(); // Esperar a que recargue para ver nuevo saldo sesión
     } else {
       // Intentar mostrar el mensaje detallado del backend
       let msg = 'Error al apostar. Revisa tu saldo disponible.';
@@ -205,8 +237,13 @@ function Apuestas() {
             <p className="stat-number" style={{ fontSize: '1.25rem' }}>{jugador.nombre}</p>
           </div>
           <div className="stat-card">
-            <h3>Mi Saldo</h3>
-            <p className="stat-number neon">{jugador.cartera_monetaria || '---'}€</p>
+            <h3>Mi Saldo {sesionActiva ? '(Sesión)' : '(Global)'}</h3>
+            <p className="stat-number neon">
+              {sesionActiva && sesionData
+                ? `${sesionData.saldo_actual}€`
+                : `${jugador.cartera_monetaria || '---'}€`
+              }
+            </p>
           </div>
           <div className="stat-card">
             <h3>Apuestas Realizadas</h3>
@@ -244,14 +281,28 @@ function Apuestas() {
           <div className="card highlight-neon">
             <div className="card-header">
               <h3 className="card-title">Nueva Apuesta</h3>
-              {jugador && (
-                <span className="badge badge-success">
-                  Jugando como: {jugador.nombre}
-                </span>
-              )}
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                {jugador && (
+                  <span className="badge badge-success">
+                    Jugando como: {jugador.nombre}
+                  </span>
+                )}
+                {sesionActiva ? (
+                  <span className="badge badge-success">🟢 Sesión Activa</span>
+                ) : (
+                  <span className="badge badge-error">🔴 Sin Sesión</span>
+                )}
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit}>
+            {!sesionActiva && (
+              <div style={{ padding: '15px', background: 'rgba(255, 0, 0, 0.1)', color: '#ff4444', marginBottom: '15px', borderRadius: '8px' }}>
+                ⚠️ <strong>Atención:</strong> Debes iniciar una sesión de juego antes de poder realizar apuestas.
+                <br />Ve a la sección "Sesiones" en el menú para comenzar.
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} style={!sesionActiva ? { opacity: 0.5, pointerEvents: 'none' } : {}}>
               <div className="form-grid">
                 <div className="form-group">
                   <label className="form-label">Selecciona un Juego</label>
@@ -340,7 +391,7 @@ function Apuestas() {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }
 

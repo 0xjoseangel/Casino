@@ -140,6 +140,12 @@ class JuegaViewSet(viewsets.ModelViewSet):
                 from rest_framework.exceptions import ValidationError
                 raise ValidationError("Debes iniciar una sesión de juego para poder apostar.")
 
+            # NUEVO: VALIDAR SALDO DE LA SESIÓN (NO DE LA CARTERA)
+            # El dinero ya está "en la sesión", así que verificamos si le queda saldo
+            if sesion_activa.saldo_actual < cantidad:
+                 from rest_framework.exceptions import ValidationError
+                 raise ValidationError(f"Saldo de sesión insuficiente ({sesion_activa.saldo_actual}€).")
+
             # 3. Guardamos la apuesta INICIAL (sin ganancia aun)
             apuesta = serializer.save(sesion=sesion_activa)
             
@@ -180,19 +186,18 @@ class JuegaViewSet(viewsets.ModelViewSet):
             apuesta.ganancia = ganancia
             apuesta.save()
 
-            # 5. ACTUALIZAR CARTERA USUARIO
-            usuario = apuesta.usuario
-            # Restar lo apostado
-            usuario.cartera_monetaria -= cantidad
-            # Sumar ganancia (si hubo)
-            usuario.cartera_monetaria += ganancia
+            # 5. ACTUALIZAR SALDO (YA NO TOCAMOS JUGADOR, SE TOCA 'VIRTUALMENTE' EN LA SESIÓN)
+            # La propiedad sesion.saldo_actual se calcula dinámicamente, así que 
+            # al guardar la apuesta con ganancia/perdida, el saldo se actualiza solo.
             
-            usuario.save()
+            # usuario.save() <-- ELIMINADO: No tocamos la cartera global aquí
 
             # --- RF: PROMOCIONES (CASHBACK) ---
             from eventos.models import Promocion
             import re
             
+            usuario = usuario_apostador # Asignamos la variable para el bloque de promociones
+
             # Buscar si el usuario participa en alguna promo de 'Cashback' activa
             # Filter traverses: usuario -> participa -> promocion
             promociones_activas = usuario.promociones.filter(
@@ -213,6 +218,8 @@ class JuegaViewSet(viewsets.ModelViewSet):
                 
                 if porcentaje > 0:
                     cashback = cantidad * Decimal(porcentaje) / Decimal(100)
+                    # El cashback SÍ se suele dar a la cuenta ppal o como bono, 
+                    # pero para simplificar, lo sumamos a la cartera global como "premio extra"
                     usuario.cartera_monetaria += cashback
                     usuario.save()
                     print(f"   🎁 PROMO CASHBACK '{promo.nombre}': Devolviendo {cashback}€ ({porcentaje}%)")
