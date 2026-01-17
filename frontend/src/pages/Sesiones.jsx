@@ -120,17 +120,19 @@ function Sesiones() {
   // --- ACCIÓN: FINALIZAR SESIÓN ---
   const handleJugadorFinalizar = async (e) => {
       e.preventDefault();
+      
+      // Solo enviamos el DNI, el backend calcula el dinero
       const datosEnvio = { 
-          saldo_final: saldoFinalInput, 
           dni_jugador: usuarioObj?.dni 
       };
 
-      const resultado = await postData(ENDPOINT_FINALIZAR, datosEnvio); // Usamos postData porque es POST
+      const resultado = await postData(ENDPOINT_FINALIZAR, datosEnvio);
       
       if (resultado && !resultado.error) {
-          alert(`🏁 Sesión Finalizada.\n\nDuración: ${resultado.duracion}\nSaldo Final: ${resultado.saldo_final}€`);
-          setSesionActivaJugador(null); // Volvemos al estado "Sin sesión"
-          setSaldoFinalInput('');
+          // Mostramos el resumen que nos devuelve el backend
+          alert(`🏁 Sesión Finalizada.\n\n${resultado.balance_juego}\n💰 Saldo Final: ${resultado.saldo_final}€`);
+          
+          setSesionActivaJugador(null); 
       } else {
           alert("❌ Error al finalizar: " + (resultado.error || JSON.stringify(resultado)));
       }
@@ -169,20 +171,23 @@ function Sesiones() {
               {sesionActivaJugador ? (
                   <div className="card" style={{ width: '100%', maxWidth: '500px', backgroundColor: '#330000', border: '1px solid #ff4444', color: 'white', padding: '30px', borderRadius: '15px', boxShadow: '0 0 20px rgba(255,68,68,0.2)'}}>
                       <h2 style={{marginTop:0, color: '#ff4444', textAlign: 'center'}}>🛑 Finalizar Juego</h2>
-                      <p style={{textAlign:'center', color:'#ccc', marginBottom:'30px'}}>¿Te retiras? Introduce tu saldo actual para cerrar la sesión.</p>
+                      <p style={{textAlign:'center', color:'#ccc', marginBottom:'30px'}}>
+                          ¿Has terminado por hoy? <br/>
+                          El sistema calculará tu saldo final automáticamente.
+                      </p>
                       
                       <form onSubmit={handleJugadorFinalizar} style={{display:'flex', flexDirection:'column', gap:'20px'}}>
-                          <div>
-                            <label style={{display:'block', marginBottom:'8px', fontWeight:'bold', color:'#ffcccc'}}>💰 Saldo Final a Retirar (€)</label>
-                            <input type="number" value={saldoFinalInput} onChange={(e) => setSaldoFinalInput(e.target.value)} required placeholder="Ej: 120" style={{width: '100%', padding:'12px', borderRadius:'8px', border:'none', fontSize:'1.1em'}} />
-                          </div>
+                          
+                          {/* YA NO HAY INPUT DE DINERO AQUÍ */}
+                          
                           <button className="btn" type="submit" style={{marginTop:'10px', height:'50px', backgroundColor:'#ff4444', color:'white', fontSize:'1.2em', fontWeight:'bold', border:'none', cursor:'pointer', borderRadius:'8px'}}>
-                            FINALIZAR SESIÓN
+                            CERRAR SESIÓN Y RETIRAR
                           </button>
                       </form>
+
                       <div style={{marginTop:'20px', textAlign:'center'}}>
                           <small style={{color:'#666', cursor:'pointer', textDecoration:'underline'}} onClick={() => setSesionActivaJugador(null)}>
-                              (¿Error? Volver a Iniciar Sesión)
+                              (¿Error visual? Volver a Iniciar)
                           </small>
                       </div>
                   </div>

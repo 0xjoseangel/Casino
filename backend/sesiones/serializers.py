@@ -53,17 +53,13 @@ class IniciarSesionSerializer(serializers.ModelSerializer):
 
 
 class FinalizarSesionSerializer(serializers.ModelSerializer):
-    # Añadimos DNI opcional para identificar al usuario desde el frontend
+    # Solo necesitamos el DNI para identificar (opcional)
     dni_jugador = serializers.CharField(write_only=True, required=False)
     
     class Meta:
         model = Sesion
-        fields = ['dni_jugador', 'saldo_final']
-
-    def validate(self, data):
-        if data.get('saldo_final') is not None and data.get('saldo_final') < 0:
-            raise serializers.ValidationError({"saldo_final": "El saldo final no puede ser negativo."})
-        return data
+        # Ya NO pedimos saldo_final, solo el DNI
+        fields = ['dni_jugador']
 
 
 class BalanceSesionSerializer(serializers.ModelSerializer):
