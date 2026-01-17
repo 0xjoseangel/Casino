@@ -43,7 +43,7 @@ function PromocionesAdmin() {
     }
 
     const res = await postData('eventos/promociones/', form);
-    if (res && !res.error && !res.fecha_fin) {
+    if (res && res.id) {
       alert('Promoción creada correctamente');
       setForm({
         nombre: '',
@@ -57,7 +57,7 @@ function PromocionesAdmin() {
       });
       cargarDatos();
     } else {
-      const mensaje = res?.fecha_fin?.[0] || res?.nombre?.[0] || 'Error al crear. Revisa los campos.';
+      const mensaje = res?.fecha_fin?.[0] || res?.nombre?.[0] || res?.detail || 'Error al crear. Revisa los campos.';
       alert(mensaje);
     }
   };
@@ -65,8 +65,10 @@ function PromocionesAdmin() {
   const habilitarPromo = async (id) => {
     const res = await postData(`eventos/promociones/${id}/habilitar/`, {});
     if (res && !res.error) {
-      alert(res.mensaje || 'Promoción habilitada');
-      cargarDatos();
+      // Actualizar estado local inmediatamente
+      setPromos(prev => prev.map(p =>
+        p.id === id ? { ...p, estado: true } : p
+      ));
     } else {
       alert(res?.error || 'Error al habilitar');
     }
@@ -75,8 +77,10 @@ function PromocionesAdmin() {
   const finalizarPromo = async (id) => {
     const res = await postData(`eventos/promociones/${id}/finalizar/`, {});
     if (res && !res.error) {
-      alert(res.mensaje || 'Promoción finalizada');
-      cargarDatos();
+      // Actualizar estado local inmediatamente
+      setPromos(prev => prev.map(p =>
+        p.id === id ? { ...p, estado: false } : p
+      ));
     } else {
       alert(res?.error || 'Error al finalizar');
     }

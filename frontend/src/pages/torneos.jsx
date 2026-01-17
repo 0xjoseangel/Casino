@@ -3,11 +3,12 @@ import { getData, postData } from '../services/api';
 
 function Torneos() {
   const [torneos, setTorneos] = useState([]);
+  const [juegos, setJuegos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalInscritos, setModalInscritos] = useState(null); // Para mostrar modal de inscritos
   const [form, setForm] = useState({
     nombre: '',
-    juego: 1,
+    juego: '',
     fecha_inicio: '',
     hora_inicio: '10:00',
     aforo_maximo: 100,
@@ -19,7 +20,15 @@ function Torneos() {
 
   useEffect(() => {
     cargarTorneos();
+    cargarJuegos();
   }, []);
+
+  const cargarJuegos = async () => {
+    const data = await getData('juegos/juegos/');
+    if (Array.isArray(data) && data.length > 0) {
+      setJuegos(data);
+    }
+  };
 
   const cargarTorneos = async () => {
     const data = await getData('eventos/torneos/');
@@ -44,11 +53,11 @@ function Torneos() {
 
     const resultado = await postData('eventos/torneos/', form);
 
-    if (resultado && !resultado.error) {
+    if (resultado && resultado.id) {
       alert('Torneo creado con éxito');
       setForm({
         nombre: '',
-        juego: 1,
+        juego: '',
         fecha_inicio: '',
         hora_inicio: '10:00',
         aforo_maximo: 100,
@@ -61,7 +70,9 @@ function Torneos() {
     } else {
       const mensaje = resultado?.precio_inscripcion?.[0] ||
                      resultado?.aforo_maximo?.[0] ||
-                     'Error al crear. Revisa que el ID del Juego exista.';
+                     resultado?.juego?.[0] ||
+                     resultado?.nombre?.[0] ||
+                     'Error al crear el torneo. Revisa los campos.';
       alert(mensaje);
     }
   };
@@ -142,15 +153,20 @@ function Torneos() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">ID del Juego</label>
-            <input
+            <label className="form-label">Juego</label>
+            <select
               name="juego"
-              type="number"
-              placeholder="ID del juego"
               value={form.juego}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="">-- Selecciona un juego --</option>
+              {juegos.map(j => (
+                <option key={j.id} value={j.id}>
+                  {j.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">

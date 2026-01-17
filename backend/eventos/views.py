@@ -10,6 +10,16 @@ from .serializers import (
 )
 
 
+def extraer_error_oracle(error_message):
+    """Extrae el mensaje limpio de un error Oracle PL/SQL"""
+    import re
+    if 'ORA-' in error_message:
+        match = re.search(r'ORA-\d+: (.*)', error_message)
+        if match:
+            return match.group(1).split('\n')[0]
+    return error_message
+
+
 class PromocionViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gestión de Promociones.
@@ -18,6 +28,20 @@ class PromocionViewSet(viewsets.ModelViewSet):
     queryset = Promocion.objects.all()
     serializer_class = PromocionSerializer
     permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            error_message = extraer_error_oracle(str(e))
+            return Response({'detail': error_message}, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            return super().update(request, *args, **kwargs)
+        except Exception as e:
+            error_message = extraer_error_oracle(str(e))
+            return Response({'detail': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def habilitar(self, request, pk=None):
@@ -89,6 +113,20 @@ class TorneoViewSet(viewsets.ModelViewSet):
     queryset = Torneo.objects.all()
     serializer_class = TorneoSerializer
     permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            error_message = extraer_error_oracle(str(e))
+            return Response({'detail': error_message}, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            return super().update(request, *args, **kwargs)
+        except Exception as e:
+            error_message = extraer_error_oracle(str(e))
+            return Response({'detail': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def finalizar(self, request, pk=None):
