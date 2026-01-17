@@ -3,9 +3,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
+from decimal import Decimal 
 
 # --- IMPORTACIONES PARA CÁLCULOS ---
-from django.db.models import Sum, DecimalField # <--- AÑADIDO DecimalField
+from django.db.models import Sum, DecimalField
 from django.db.models.functions import Coalesce 
 # -----------------------------------
 
@@ -33,6 +34,7 @@ class IniciarSesionView(generics.CreateAPIView):
         dni_enviado = serializer.validated_data.get('dni_jugador')
         jugador_real = None
 
+        # 1. Identificar al Jugador
         if dni_enviado:
             try:
                 jugador_real = Jugador.objects.get(dni=dni_enviado)
@@ -46,8 +48,21 @@ class IniciarSesionView(generics.CreateAPIView):
         if not jugador_real:
              raise ValidationError({"usuario": "No se ha podido identificar al jugador."})
 
+        # 2. Comprobar si ya tiene sesión activa
         if Sesion.objects.filter(usuario=jugador_real, activa=True).exists():
             raise ValidationError({"sesion": "Ya tienes una sesión activa."})
+
+        # 3. --- NUEVA RESTRICCIÓN: NO SUPERAR SALDO DE CARTERA ---
+        saldo_inicio = serializer.validated_data.get('saldo_inicio')
+        
+        # Convertimos a Decimal para comparar peras con peras
+        saldo_inicio_dec = Decimal(str(saldo_inicio)) 
+        
+        if saldo_inicio_dec > jugador_real.cartera_monetaria:
+            raise ValidationError({
+                "saldo_inicio": f"Saldo insuficiente. Intentas iniciar con {saldo_inicio_dec}€ pero solo tienes {jugador_real.cartera_monetaria}€ en tu cartera."
+            })
+        # ---------------------------------------------------------
 
         serializer.save(usuario=jugador_real)
 
@@ -89,20 +104,20 @@ class FinalizarSesionView(APIView):
         except Sesion.DoesNotExist:
             return Response({"error": "No tienes ninguna sesión activa para cerrar."}, status=400)
         
-        # 3. CÁLCULO AUTOMÁTICO DEL SALDO FINAL
-        # CORRECCIÓN AQUÍ: Añadimos output_field=DecimalField() para evitar el error de tipos mixtos
+        # 3. CÁLCULO ESTADÍSTICO DEL SALDO FINAL
         resumen_juego = sesion.apuestas_sesion.aggregate(
             total_apostado=Coalesce(Sum('cantidad_apostada'), 0, output_field=DecimalField()),
             total_ganado=Coalesce(Sum('ganancia'), 0, output_field=DecimalField())
         )
         
-        apostado = float(resumen_juego['total_apostado'])
-        ganado = float(resumen_juego['total_ganado'])
+        apostado = Decimal(resumen_juego['total_apostado'])
+        ganado = Decimal(resumen_juego['total_ganado'])
+        saldo_inicio_dec = Decimal(sesion.saldo_inicio)
         
-        # Calculamos saldo
-        saldo_calculado = float(sesion.saldo_inicio) - apostado + ganado
+        # Calculamos saldo final teórico
+        saldo_calculado = saldo_inicio_dec - apostado + ganado
         
-        # 4. GUARDAR Y CERRAR
+        # 4. CERRAR SESIÓN
         sesion.finalizar_sesion(saldo_calculado)
         
         return Response({
