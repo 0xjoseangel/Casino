@@ -70,6 +70,7 @@ function AppContent({ usuario, logout }) {
               <NavItem to="/mis-apuestas" icon="🎲">Mis Apuestas</NavItem>
               <NavItem to="/transacciones" icon="💳">Transacciones</NavItem>
               <NavItem to="/juegos" icon="🎰">Sala de Juegos</NavItem>
+              <NavItem to="/sesiones-global" icon="⏱️">Sesiones</NavItem>
               <NavItem to="/mi-perfil" icon="👤">Mi Perfil</NavItem>
               <NavItem to="/promociones" icon="🎁">Ofertas</NavItem>
             </>
@@ -108,6 +109,7 @@ function AppContent({ usuario, logout }) {
           {!esAdmin && (
             <>
               <Route path="/mis-torneos" element={<TorneosJugador usuario={usuario} />} />
+              <Route path="/sesiones-global" element={<Sesiones />} />
               <Route path="/mis-apuestas" element={<Apuestas />} />
               <Route path="/transacciones" element={<TransaccionesJugador />} />
               <Route path="/promociones" element={<PromocionesJugador />} />

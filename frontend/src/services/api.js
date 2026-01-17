@@ -28,16 +28,23 @@ export const postData = async (endpoint, data) => {
 };
 
 // Función genérica para actualizar datos (PUT)
-export const putData = async (endpoint, data) => {
+export const putData = async (endpoint, body) => {
     try {
-        const response = await fetch(`${API_URL}/${endpoint}`, {
+        const response = await fetch(`${API_URL}${endpoint}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            headers: {
+                'Content-Type': 'application/json',
+                // Si usas tokens, recuerda añadirlos aquí también
+            },
+            body: JSON.stringify(body)
         });
+        if (!response.ok) {
+            const errorData = await response.json();
+            return { error: true, ...errorData }; // Devuelve los errores
+        }
         return await response.json();
     } catch (error) {
-        console.error("Error API:", error);
-        return { error: true };
+        console.error("Error PUT:", error);
+        return { error: true, detail: "Error de conexión" };
     }
 };
