@@ -64,6 +64,10 @@ class IniciarSesionView(generics.CreateAPIView):
             })
         # ---------------------------------------------------------
 
+        # 4. RESTAR CAJA A LA CARTERA GLOBAL (Mover dinero a la sesión)
+        jugador_real.cartera_monetaria -= saldo_inicio_dec
+        jugador_real.save()
+
         serializer.save(usuario=jugador_real)
 
 
@@ -130,7 +134,11 @@ class FinalizarSesionView(APIView):
         # Fórmula: Lo que metí - Lo que jugué + Lo que gané
         saldo_calculado = saldo_inicio_dec - apostado + ganado
         
-        # 4. CERRAR SESIÓN
+        # 4. DEVOLVER SALDO RESTANTE A LA CARTERA GLOBAL
+        jugador_real.cartera_monetaria += saldo_calculado
+        jugador_real.save()
+
+        # 5. CERRAR SESIÓN
         sesion.finalizar_sesion(saldo_calculado)
         
         return Response({
