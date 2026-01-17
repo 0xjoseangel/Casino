@@ -35,7 +35,9 @@ class IniciarSesionView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny] # Puerta abierta para pruebas
 
     def perform_create(self, serializer):
-        jugador_real = obtener_jugador_seguro(self.request.user)
+        if 'jugador_validado' in serializer.context:
+            jugador_real = serializer.context['jugador_validado']
+            print(f"✅ Asignando sesión al jugador por DNI: {jugador_real.dni}")
         serializer.save(usuario=jugador_real)
 
 # RF5.2: Finalizar Sesión

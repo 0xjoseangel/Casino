@@ -46,19 +46,49 @@ function Sesiones() {
 
 const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Llamamos al backend
     const resultado = await postData(ENDPOINT_INICIAR, form);
     
-    // CAMBIO CLAVE: Comprobamos si nos ha devuelto un ID (éxito)
+    // CASO 1: ÉXITO (El backend nos devuelve el objeto creado con su ID)
     if (resultado && resultado.id) {
-      alert('✅ Sesión iniciada correctamente (ID: ' + resultado.id + ')');
+      alert(`✅ Sesión iniciada correctamente (ID: ${resultado.id})`);
+      
+      // Recargamos la lista y limpiamos el formulario
       cargarListaSesiones();
-      setForm({ dni_jugador: '', saldo_inicio: '', regla1_limite_gasto_diario: '', regla2_limite_operaciones_hora: '' });
-    } else {
-      // Si no hay ID, es un error. Lo mostramos tal cual viene del servidor.
-      console.error("Error al iniciar:", resultado);
-      alert('❌ Error al iniciar. Revisa los datos.\n\n' + JSON.stringify(resultado, null, 2));
+      setForm({ 
+        dni_jugador: '', 
+        saldo_inicio: '', 
+        regla1_limite_gasto_diario: '', 
+        regla2_limite_operaciones_hora: '' 
+      });
+    } 
+    
+    // CASO 2: ERROR (El backend devuelve un diccionario de fallos)
+    else {
+      console.error("Errores de validación:", resultado);
+
+      let mensajeError = "❌ No se pudo iniciar la sesión. Revisa lo siguiente:\n\n";
+
+      // Django devuelve los errores así: { "campo": ["Mensaje de error"] }
+      // Vamos a recorrer esas claves para montar un mensaje bonito
+      if (resultado && typeof resultado === 'object') {
+          Object.keys(resultado).forEach(campo => {
+              const errores = resultado[campo];
+              // Convertimos el array de errores en texto plano
+              const texto = Array.isArray(errores) ? errores.join(", ") : errores;
+              
+              // Añadimos una viñeta al mensaje final
+              mensajeError += `• ${texto}\n`;
+          });
+      } else {
+          mensajeError += "Ocurrió un error de conexión desconocido.";
+      }
+
+      alert(mensajeError);
     }
   };
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };

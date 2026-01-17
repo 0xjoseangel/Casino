@@ -18,7 +18,7 @@ class IniciarSesionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sesion
-        fields = ['dni_jugador', 'saldo_inicio', 'regla1_limite_gasto_diario', 'regla2_limite_operaciones_hora']
+        fields = ['id', 'dni_jugador', 'saldo_inicio', 'regla1_limite_gasto_diario', 'regla2_limite_operaciones_hora']
 
     def validate(self, data):
         dni = data.get('dni_jugador')
@@ -35,12 +35,31 @@ class IniciarSesionSerializer(serializers.ModelSerializer):
             
         if data.get('saldo_inicio') < 0:
             raise serializers.ValidationError({"saldo_inicio": "El saldo debe ser positivo."})
-            
+        
+        # 3. VALIDACIONES NUMÉRICAS (NUEVO: Anti-Negativos)
+        errores_numericos = {}
+        
+        saldo = data.get('saldo_inicio')
+        if saldo is not None and saldo < 0:
+            errores_numericos['saldo_inicio'] = "El saldo inicial no puede ser negativo."
+
+        limite_gasto = data.get('regla1_limite_gasto_diario')
+        if limite_gasto is not None and limite_gasto < 0:
+            errores_numericos['regla1_limite_gasto_diario'] = "El límite de gasto no puede ser negativo."
+
+        limite_ops = data.get('regla2_limite_operaciones_hora')
+        if limite_ops is not None and limite_ops < 0:
+            errores_numericos['regla2_limite_operaciones_hora'] = "El límite de operaciones no puede ser negativo."
+
+        # Si hemos encontrado algún error numérico, paramos aquí
+        if errores_numericos:
+            raise serializers.ValidationError(errores_numericos)
+    
         # Guardamos el jugador para usarlo después
         self.context['jugador_validado'] = jugador
         return data
 
-    # --- ¡ESTO ES LO NUEVO QUE FALTABA! ---
+    
     def create(self, validated_data):
         # Eliminamos 'dni_jugador' de los datos porque ese campo NO existe en la tabla Sesion
         validated_data.pop('dni_jugador', None)
@@ -70,7 +89,20 @@ class HistorialSesionSerializer(serializers.ModelSerializer):
         model = Sesion
         fields = ['id', 'fecha_actual', 'hora_inicio', 'hora_fin', 'saldo_inicio', 'saldo_final', 'juegos_jugados', 'activa']
 
+
 class ModificarSeguridadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sesion
         fields = ['regla1_limite_gasto_diario', 'regla2_limite_operaciones_hora']
+
+    def validate(self, data):
+        # También protegemos la modificación
+        errores = {}
+        if data.get('regla1_limite_gasto_diario', 0) < 0:
+             errores['regla1_limite_gasto_diario'] = "El límite no puede ser negativo."
+        if data.get('regla2_limite_operaciones_hora', 0) < 0:
+             errores['regla2_limite_operaciones_hora'] = "El límite no puede ser negativo."
+        
+        if errores:
+            raise serializers.ValidationError(errores)
+        return data
