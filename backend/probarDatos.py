@@ -12,8 +12,8 @@ django.setup()
 from usuarios.models import Jugador, Administrador
 from juegos.models import Juego
 from eventos.models import Torneo, Participa
-from transacciones.models import Transaccion, Apuesta 
-# NOTA: Si da error 'sesiones', asegúrate de tener la app o comenta la línea de sesión en Apuesta más abajo
+from transacciones.models import Transaccion, Juega 
+from sesiones.models import Sesion
 
 print("🎰 INICIANDO GENERACIÓN DE DATOS REALES (FULL VERSION) 🎰")
 print("-" * 50)
@@ -170,6 +170,18 @@ def crear_transacciones_y_apuestas(jugadores, juegos):
 
     # 2. APUESTAS (Jugar)
     for jugador in jugadores:
+        # CREAR SESIÓN PARA PODER APOSTAR
+        try:
+            sesion = Sesion.objects.create(
+                usuario=jugador,
+                saldo_inicio=jugador.cartera_monetaria,
+                hora_inicio=timezone.now(),
+                activa=True
+            )
+        except Exception as e:
+            print(f"  [WARN] No se pudo crear sesión para {jugador.dni}: {e}")
+            continue
+
         # Cada jugador echa unas 5 partidas
         for _ in range(5):
             juego = random.choice(juegos)
@@ -181,10 +193,10 @@ def crear_transacciones_y_apuestas(jugadores, juegos):
             resultado = "Victoria" if gano else "Derrota"
             
             try:
-                Apuesta.objects.create(
+                Juega.objects.create(
                     usuario=jugador,
                     juego=juego,
-                    sesion=None, 
+                    sesion=sesion, 
                     fecha=timezone.now() - timedelta(minutes=random.randint(1, 5000)),
                     cantidad_apostada=apostado,
                     ganancia=ganancia,

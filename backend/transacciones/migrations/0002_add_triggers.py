@@ -31,9 +31,9 @@ class Migration(migrations.Migration):
             sql=load_sql_from_file('triggers.sql'),
             reverse_sql="DROP TRIGGER TRG_CHECK_CANTIDAD_TRANSACCION; DROP TRIGGER TRG_CHECK_SALDO_RETIRO; DROP TRIGGER TRG_CHECK_SALDO_TRANSFERENCIA; DROP TRIGGER TRG_CHECK_DEPOSITO_MAX;"
         ),
-        # Triggers de apuestas (validaciones de apuestas)
-        migrations.RunSQL(
-            sql=load_sql_from_file('triggers_apuestas.sql'),
-            reverse_sql="DROP TRIGGER TRG_CHECK_CANTIDAD_APUESTA; DROP TRIGGER TRG_CHECK_SALDO_APUESTA; DROP TRIGGER TRG_CHECK_RANGO_APUESTA;"
-        ),
+        # Triggers de apuestas (MOVIDO A 0004 POR REFACTORIZACION DE TABLA)
+        # migrations.RunSQL(
+        #     sql=load_sql_from_file('triggers_apuestas.sql'),
+        #     reverse_sql="DROP TRIGGER TRG_CHECK_CANTIDAD_APUESTA; DROP TRIGGER TRG_CHECK_SALDO_APUESTA; DROP TRIGGER TRG_CHECK_RANGO_APUESTA;"
+        # ),
     ]

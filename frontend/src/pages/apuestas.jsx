@@ -159,7 +159,16 @@ function Apuestas() {
       setForm({ juego: '', cantidad_apostada: '' });
       cargarDatos();
     } else {
-      alert('Error al apostar. Revisa tu saldo disponible.');
+      // Intentar mostrar el mensaje detallado del backend
+      let msg = 'Error al apostar. Revisa tu saldo disponible.';
+      if (Array.isArray(resultado) && resultado.length > 0) {
+        msg = resultado[0];
+      } else if (resultado && resultado.detail) {
+        msg = resultado.detail;
+      } else if (resultado && resultado.non_field_errors) {
+        msg = resultado.non_field_errors[0];
+      }
+      alert(`⚠️ ${msg}`);
     }
     setEnviando(false);
   };

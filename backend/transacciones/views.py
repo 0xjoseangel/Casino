@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from django.db import transaction
-from .models import Transaccion, Apuesta
-from .serializers import TransaccionSerializer, ApuestaSerializer
+from .models import Transaccion, Juega
+from .serializers import TransaccionSerializer, JuegaSerializer
 
 # Importamos el modelo Sesion de forma segura
 try:
@@ -87,26 +87,38 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             usuario.save()
             print(f"   Saldo DESPUÉS: {usuario.cartera_monetaria}\n")
 
-class ApuestaViewSet(viewsets.ModelViewSet):
-    queryset = Apuesta.objects.all().order_by('-fecha')
-    serializer_class = ApuestaSerializer
+class JuegaViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para manejar las apuestas (Juega).
+    """
+    queryset = Juega.objects.all().order_by('-fecha')
+    serializer_class = JuegaSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
+        # NOTA: En este proyecto la autenticación por token no está completamente implementada en el frontend,
+        # así que usamos 'rol' y 'usuario' URL params como fallback de seguridad (igual que en TransaccionViewSet).
+        
         rol_param = self.request.query_params.get('rol')
         usuario_param = self.request.query_params.get('usuario')
+        usuario = self.request.user
 
-        # 1. Admin
-        if rol_param == 'admin' or self.request.user.is_staff:
+        # 1. ¿Es Administrador? (Check param OR auth user)
+        if rol_param == 'admin' or usuario.is_superuser or (usuario.is_authenticated and hasattr(usuario, 'rol') and usuario.rol == 'ADMINISTRADOR'):
             if usuario_param:
-                return Apuesta.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
-            return Apuesta.objects.all().order_by('-fecha')
-
-        # 2. Jugador
+                return Juega.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
+            return Juega.objects.all().order_by('-fecha')
+        
+        # 2. ¿Es Jugador?
+        # Si viene usuario_param, confiamos en él para entorno de prácticas (o si estuviera logueado)
         if usuario_param:
-            return Apuesta.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
-            
-        return Apuesta.objects.none()
+             return Juega.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
+
+        # 3. Fallback Auth estándar
+        elif usuario.is_authenticated and hasattr(usuario, 'rol') and usuario.rol == 'JUGADOR':
+            return Juega.objects.filter(usuario=usuario).order_by('-fecha')
+
+        return Juega.objects.none()
 
     def perform_create(self, serializer):
         import random
@@ -122,6 +134,11 @@ class ApuestaViewSet(viewsets.ModelViewSet):
             # 2. VINCULACIÓN DE SESIÓN
             if Sesion:
                 sesion_activa = Sesion.objects.filter(usuario=usuario_apostador, activa=True).first()
+            
+            # NUEVO: Si no hay sesión, no se puede apostar.
+            if not sesion_activa:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError("Debes iniciar una sesión de juego para poder apostar.")
 
             # 3. Guardamos la apuesta INICIAL (sin ganancia aun)
             apuesta = serializer.save(sesion=sesion_activa)
