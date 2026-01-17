@@ -5,14 +5,15 @@ from .views import (
     BalanceSesionView,
     ModificarSeguridadView,
     HistorialJuegosView,
-    ListarSesionesView
+    ListarSesionesView,
+    ListarJugadoresDropdownView
 )
 
 
 urlpatterns = [
     # RF5.1
     path('iniciar/', IniciarSesionView.as_view(), name='iniciar_sesion'),
-    
+    path('jugadores-dropdown/', ListarJugadoresDropdownView.as_view(), name='listar_jugadores_dropdown'),
     # RF5.2
     path('finalizar/', FinalizarSesionView.as_view(), name='finalizar_sesion'),
     

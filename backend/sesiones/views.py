@@ -115,3 +115,14 @@ class ModificarSeguridadView(generics.UpdateAPIView):
         response = super().update(request, *args, **kwargs)
         response.data['mensaje'] = "Criterios de seguridad actualizados"
         return response
+    
+class ListarJugadoresDropdownView(APIView):
+    """
+    Devuelve una lista simple de jugadores para el desplegable del frontend.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # Obtenemos solo los campos necesarios para el desplegable
+        jugadores = Jugador.objects.all().values('dni', 'nombre', 'apellidos')
+        return Response(list(jugadores), status=status.HTTP_200_OK)
