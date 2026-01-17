@@ -57,7 +57,7 @@ function MiPerfil() {
             });
 
             // La respuesta puede ser { message: "Baja realizada..." } o error
-            if (response && response.message) {
+            if (response && response.mensaje) {
                 alert("Tu cuenta ha sido dada de baja. Hasta pronto.");
                 localStorage.removeItem('casino_usuario');
                 window.location.href = '/login'; // Force reload/redirect

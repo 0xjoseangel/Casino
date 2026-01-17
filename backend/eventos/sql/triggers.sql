@@ -80,19 +80,26 @@ END;  -- django fix
 -- TRIGGERS PARA PARTICIPA (Inscripcion a Promociones)
 -- -----------------------------------------------------
 
--- Disparador para validar que la promocion este activa al inscribirse
+-- Disparador para validar que la promocion este activa y VIGENTE al inscribirse
 CREATE OR REPLACE TRIGGER TRG_CHECK_PROMOCION_ACTIVA
 BEFORE INSERT ON "EVENTOS_PARTICIPA"
 FOR EACH ROW
 DECLARE
     v_estado NUMBER(1);
+    v_fecha_inicio DATE;
+    v_fecha_fin DATE;
 BEGIN
-    SELECT "ESTADO" INTO v_estado
+    SELECT "ESTADO", "FECHA_INICIO", "FECHA_FIN"
+    INTO v_estado, v_fecha_inicio, v_fecha_fin
     FROM "EVENTOS_PROMOCION"
     WHERE "ID" = :NEW."PROMOCION_ID";
 
     IF v_estado = 0 THEN
         RAISE_APPLICATION_ERROR(-20046, 'No puedes inscribirte a una promocion inactiva.');
+    END IF;
+    
+    IF SYSDATE < v_fecha_inicio OR SYSDATE > v_fecha_fin THEN
+        RAISE_APPLICATION_ERROR(-20052, 'La promocion no esta vigente en la fecha actual.');
     END IF;
 END;  -- django fix
 /
@@ -122,11 +129,29 @@ BEGIN
 END; -- django fix
 /
 
+-- Disparador para evitar inscripciones duplicadas en Promociones
+CREATE OR REPLACE TRIGGER TRG_CHECK_DUPLICADO_PARTICIPA
+BEFORE INSERT ON "EVENTOS_PARTICIPA"
+FOR EACH ROW
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count
+    FROM "EVENTOS_PARTICIPA"
+    WHERE "JUGADOR_ID" = :NEW."JUGADOR_ID" 
+      AND "PROMOCION_ID" = :NEW."PROMOCION_ID";
+    
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20051, 'Ya estas inscrito en esta promocion.');
+    END IF;
+END; -- django fix
+/
+
 -- -----------------------------------------------------
 -- TRIGGERS PARA COMPITE (Inscripcion a Torneos)
 -- -----------------------------------------------------
 
--- Disparador para validar que el torneo permita inscripciones
+-- Disparador para validar que el torneo permina inscripciones
 CREATE OR REPLACE TRIGGER TRG_CHECK_TORNEO_ABIERTO
 BEFORE INSERT ON "EVENTOS_COMPITE"
 FOR EACH ROW
@@ -172,6 +197,24 @@ FOR EACH ROW
 BEGIN
     IF :NEW."POSICION" IS NOT NULL AND :NEW."POSICION" <= 0 THEN
         RAISE_APPLICATION_ERROR(-20050, 'La posicion debe ser un numero positivo.');
+    END IF;
+END; -- django fix
+/
+
+-- Disparador para evitar inscripciones duplicadas en Torneos
+CREATE OR REPLACE TRIGGER TRG_CHECK_DUPLICADO_COMPITE
+BEFORE INSERT ON "EVENTOS_COMPITE"
+FOR EACH ROW
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count
+    FROM "EVENTOS_COMPITE"
+    WHERE "JUGADOR_ID" = :NEW."JUGADOR_ID" 
+      AND "TORNEO_ID" = :NEW."TORNEO_ID";
+    
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20053, 'Ya estas inscrito en este torneo.');
     END IF;
 END; -- django fix
 /

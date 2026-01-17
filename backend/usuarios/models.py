@@ -17,6 +17,10 @@ class Jugador(models.Model):
         verbose_name = 'Jugador'
         verbose_name_plural = 'Jugadores'
 
+    @property
+    def rol(self):
+        return 'JUGADOR'
+
 class Administrador(models.Model):
     dni = models.CharField(max_length=9, primary_key=True) 
     nombre = models.CharField(max_length=20)
@@ -32,3 +36,7 @@ class Administrador(models.Model):
         db_table = 'ADMINISTRADOR' 
         verbose_name = 'Administrador'
         verbose_name_plural = 'Administradores'
+
+    @property
+    def rol(self):
+        return 'ADMINISTRADOR'

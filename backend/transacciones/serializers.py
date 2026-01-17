@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Transaccion, Apuesta
+from .models import Transaccion, Juega
 
 class TransaccionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,9 +42,15 @@ class TransaccionSerializer(serializers.ModelSerializer):
 
         return data
 
-class ApuestaSerializer(serializers.ModelSerializer):
+class JuegaSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el modelo Juega
+    """
+    usuario_dni = serializers.CharField(source='usuario.dni', read_only=True)
+    juego_nombre = serializers.CharField(source='juego.nombre', read_only=True)
+
     class Meta:
-        model = Apuesta
+        model = Juega
         fields = '__all__'
 
     def validate(self, data):

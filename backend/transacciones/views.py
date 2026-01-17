@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from django.db import transaction
-from .models import Transaccion, Apuesta
-from .serializers import TransaccionSerializer, ApuestaSerializer
+from .models import Transaccion, Juega
+from .serializers import TransaccionSerializer, JuegaSerializer
 
 # Importamos el modelo Sesion de forma segura
 try:
@@ -87,26 +87,38 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             usuario.save()
             print(f"   Saldo DESPUÉS: {usuario.cartera_monetaria}\n")
 
-class ApuestaViewSet(viewsets.ModelViewSet):
-    queryset = Apuesta.objects.all().order_by('-fecha')
-    serializer_class = ApuestaSerializer
+class JuegaViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para manejar las apuestas (Juega).
+    """
+    queryset = Juega.objects.all().order_by('-fecha')
+    serializer_class = JuegaSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
+        # NOTA: En este proyecto la autenticación por token no está completamente implementada en el frontend,
+        # así que usamos 'rol' y 'usuario' URL params como fallback de seguridad (igual que en TransaccionViewSet).
+        
         rol_param = self.request.query_params.get('rol')
         usuario_param = self.request.query_params.get('usuario')
+        usuario = self.request.user
 
-        # 1. Admin
-        if rol_param == 'admin' or self.request.user.is_staff:
+        # 1. ¿Es Administrador? (Check param OR auth user)
+        if rol_param == 'admin' or usuario.is_superuser or (usuario.is_authenticated and hasattr(usuario, 'rol') and usuario.rol == 'ADMINISTRADOR'):
             if usuario_param:
-                return Apuesta.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
-            return Apuesta.objects.all().order_by('-fecha')
-
-        # 2. Jugador
+                return Juega.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
+            return Juega.objects.all().order_by('-fecha')
+        
+        # 2. ¿Es Jugador?
+        # Si viene usuario_param, confiamos en él para entorno de prácticas (o si estuviera logueado)
         if usuario_param:
-            return Apuesta.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
-            
-        return Apuesta.objects.none()
+             return Juega.objects.filter(usuario__dni=usuario_param).order_by('-fecha')
+
+        # 3. Fallback Auth estándar
+        elif usuario.is_authenticated and hasattr(usuario, 'rol') and usuario.rol == 'JUGADOR':
+            return Juega.objects.filter(usuario=usuario).order_by('-fecha')
+
+        return Juega.objects.none()
 
     def perform_create(self, serializer):
         import random
@@ -122,6 +134,17 @@ class ApuestaViewSet(viewsets.ModelViewSet):
             # 2. VINCULACIÓN DE SESIÓN
             if Sesion:
                 sesion_activa = Sesion.objects.filter(usuario=usuario_apostador, activa=True).first()
+            
+            # NUEVO: Si no hay sesión, no se puede apostar.
+            if not sesion_activa:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError("Debes iniciar una sesión de juego para poder apostar.")
+
+            # NUEVO: VALIDAR SALDO DE LA SESIÓN (NO DE LA CARTERA)
+            # El dinero ya está "en la sesión", así que verificamos si le queda saldo
+            if sesion_activa.saldo_actual < cantidad:
+                 from rest_framework.exceptions import ValidationError
+                 raise ValidationError(f"Saldo de sesión insuficiente ({sesion_activa.saldo_actual}€).")
 
             # 3. Guardamos la apuesta INICIAL (sin ganancia aun)
             apuesta = serializer.save(sesion=sesion_activa)
@@ -163,19 +186,18 @@ class ApuestaViewSet(viewsets.ModelViewSet):
             apuesta.ganancia = ganancia
             apuesta.save()
 
-            # 5. ACTUALIZAR CARTERA USUARIO
-            usuario = apuesta.usuario
-            # Restar lo apostado
-            usuario.cartera_monetaria -= cantidad
-            # Sumar ganancia (si hubo)
-            usuario.cartera_monetaria += ganancia
+            # 5. ACTUALIZAR SALDO (YA NO TOCAMOS JUGADOR, SE TOCA 'VIRTUALMENTE' EN LA SESIÓN)
+            # La propiedad sesion.saldo_actual se calcula dinámicamente, así que 
+            # al guardar la apuesta con ganancia/perdida, el saldo se actualiza solo.
             
-            usuario.save()
+            # usuario.save() <-- ELIMINADO: No tocamos la cartera global aquí
 
             # --- RF: PROMOCIONES (CASHBACK) ---
             from eventos.models import Promocion
             import re
             
+            usuario = usuario_apostador # Asignamos la variable para el bloque de promociones
+
             # Buscar si el usuario participa en alguna promo de 'Cashback' activa
             # Filter traverses: usuario -> participa -> promocion
             promociones_activas = usuario.promociones.filter(
@@ -196,6 +218,8 @@ class ApuestaViewSet(viewsets.ModelViewSet):
                 
                 if porcentaje > 0:
                     cashback = cantidad * Decimal(porcentaje) / Decimal(100)
+                    # El cashback SÍ se suele dar a la cuenta ppal o como bono, 
+                    # pero para simplificar, lo sumamos a la cartera global como "premio extra"
                     usuario.cartera_monetaria += cashback
                     usuario.save()
                     print(f"   🎁 PROMO CASHBACK '{promo.nombre}': Devolviendo {cashback}€ ({porcentaje}%)")

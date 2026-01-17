@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Sesion
-from transacciones.models import Apuesta 
+from transacciones.models import Juega 
 from usuarios.models import Jugador
 
 # --- SERIALIZADOR AUXILIAR ---
@@ -8,7 +8,7 @@ class HistorialApuestaSerializer(serializers.ModelSerializer):
     juego_nombre = serializers.CharField(source='juego.nombre', read_only=True)
     
     class Meta:
-        model = Apuesta
+        model = Juega
         fields = ['fecha', 'juego_nombre', 'cantidad_apostada', 'ganancia', 'resultado']
 
 # --- SERIALIZADORES PRINCIPALES ---
@@ -65,10 +65,11 @@ class FinalizarSesionSerializer(serializers.ModelSerializer):
 class BalanceSesionSerializer(serializers.ModelSerializer):
     """ Para el Listado """
     beneficio_perdida = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    saldo_actual = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     
     class Meta:
         model = Sesion
-        fields = ['id', 'fecha_actual', 'hora_inicio', 'hora_fin', 'saldo_inicio', 'saldo_final', 'beneficio_perdida', 'activa']
+        fields = ['id', 'fecha_actual', 'hora_inicio', 'hora_fin', 'saldo_inicio', 'saldo_actual', 'saldo_final', 'beneficio_perdida', 'activa']
 
 
 class HistorialSesionSerializer(serializers.ModelSerializer):

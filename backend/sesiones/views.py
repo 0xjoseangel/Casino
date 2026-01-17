@@ -60,13 +60,9 @@ class IniciarSesionView(generics.CreateAPIView):
         
         if jugador_real.cartera_monetaria < saldo_inicio_dec:
             raise ValidationError({
-                "saldo_inicio": f"Saldo insuficiente. Tienes {jugador_real.cartera_monetaria}€ en tu cartera."
+                "saldo_inicio": f"Saldo insuficiente. Intentas iniciar con {saldo_inicio_dec}€ pero solo tienes {jugador_real.cartera_monetaria}€ en tu cartera."
             })
-
-        # Si tiene dinero, se lo quitamos de la cartera (pasa a la sesión)
-        jugador_real.cartera_monetaria -= saldo_inicio_dec
-        jugador_real.save()
-        # -------------------------------------------
+        # ---------------------------------------------------------
 
         serializer.save(usuario=jugador_real)
 
@@ -76,7 +72,19 @@ class ListarSesionesView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny] 
 
     def get_queryset(self):
-        return Sesion.objects.all().order_by('-fecha_actual', '-hora_inicio')
+        queryset = Sesion.objects.all().order_by('-fecha_actual', '-hora_inicio')
+        
+        # Filtros opcionales
+        usuario_param = self.request.query_params.get('usuario')
+        if usuario_param:
+            queryset = queryset.filter(usuario__dni=usuario_param)
+            
+        activa_param = self.request.query_params.get('activa')
+        if activa_param:
+            is_active = activa_param.lower() == 'true'
+            queryset = queryset.filter(activa=is_active)
+            
+        return queryset
 
 
 class FinalizarSesionView(APIView):
@@ -122,13 +130,7 @@ class FinalizarSesionView(APIView):
         # Fórmula: Lo que metí - Lo que jugué + Lo que gané
         saldo_calculado = saldo_inicio_dec - apostado + ganado
         
-        # 4. --- NUEVO: DEVOLVER DINERO A LA CARTERA ---
-        # El saldo final vuelve al bolsillo del jugador
-        jugador_real.cartera_monetaria += saldo_calculado
-        jugador_real.save()
-        # ---------------------------------------------
-
-        # 5. GUARDAR Y CERRAR LA SESIÓN
+        # 4. CERRAR SESIÓN
         sesion.finalizar_sesion(saldo_calculado)
         
         return Response({

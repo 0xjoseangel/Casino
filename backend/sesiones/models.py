@@ -60,6 +60,25 @@ class Sesion(models.Model):
     
         self.save()
 
+    @property
+    def saldo_actual(self):
+        """
+        Calcula el saldo actual de la sesión en tiempo real.
+        Saldo Inicial - Total Apostado + Total Ganado
+        """
+        from django.db.models import Sum
+        from decimal import Decimal
+        
+        resumen = self.apuestas_sesion.aggregate(
+            apostado=Sum('cantidad_apostada'),
+            ganado=Sum('ganancia')
+        )
+        
+        apostado = resumen['apostado'] or 0
+        ganado = resumen['ganado'] or 0
+        
+        return self.saldo_inicio - Decimal(apostado) + Decimal(ganado)
+
     def obtener_balance(self):
         """
         RF5.3: Calcular ganancias o pérdidas.

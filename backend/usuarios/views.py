@@ -55,16 +55,21 @@ class JugadorViewSet(viewsets.ModelViewSet):
             jugador.save()
             return Response({'mensaje': 'Jugador dado de baja correctamente (Admin)'}, status=status.HTTP_200_OK)
 
-        # Caso 2: Propio Jugador (Necesita contraseña y confirmación)
+        # Caso 2: Propio Jugador (Necesita contraseña)
         password = request.data.get('contrasena')
-        codigo_confirmacion = request.data.get('mensaje_confirmacion')
-
-        if jugador.contrasena == password and codigo_confirmacion == "ELIMINAR":
-            jugador.baja = True
-            jugador.save()
-            return Response({'mensaje': 'Tu cuenta ha sido dada de baja correctamente'}, status=status.HTTP_200_OK)
         
-        return Response({'error': 'Credenciales o código incorrectos'}, status=status.HTTP_400_BAD_REQUEST)
+        # Asignamos la contraseña que viene del usuario al objeto
+        # IMPORTANTE: Esto es para que el Trigger de Oracle compare :NEW.CONTRASENA con :OLD.CONTRASENA
+        if password:
+            jugador.contrasena = password
+
+        jugador.baja = True
+        
+        # Guardamos enviando explícitamente la contraseña para que el trigger la valide
+        # Si la contraseña es incorrecta (diferente a la de la BD), el trigger lanzará error ORA-20004
+        jugador.save(update_fields=['baja', 'contrasena'])
+        
+        return Response({'mensaje': 'Tu cuenta ha sido dada de baja correctamente'}, status=status.HTTP_200_OK)
 
     # RF1.3: Consultar datos de jugador
     def retrieve(self, request, *args, **kwargs):

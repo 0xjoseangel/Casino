@@ -55,7 +55,7 @@ class Transaccion(models.Model):
         ordering = ['-fecha']
 
 
-class Apuesta(models.Model):
+class Juega(models.Model):
     """
     Corresponde a la Tabla 7 (Juega) y cubre RF3.3 (Nueva Apuesta).
     Separamos esto porque tiene una lógica distinta vinculada a Juegos y Sesiones.
@@ -68,7 +68,7 @@ class Apuesta(models.Model):
     )
     juego = models.ForeignKey(
         'juegos.Juego', 
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE, 
         related_name='apuestas_realizadas'
     )
     # Según Tabla 7, la apuesta se vincula a una Sesión
@@ -95,6 +95,7 @@ class Apuesta(models.Model):
         return f"Apuesta {self.juego.nombre} - {self.usuario.dni} - {self.cantidad_apostada}€"
 
     class Meta:
-        verbose_name = "Apuesta (Juega)"
-        verbose_name_plural = "Apuestas"
+        db_table = 'JUEGA'
+        verbose_name = "Juega"
+        verbose_name_plural = "Juega"
         ordering = ['-fecha']
