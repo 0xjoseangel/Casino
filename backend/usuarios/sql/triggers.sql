@@ -33,3 +33,18 @@ BEGIN
     END IF;
 END; -- django fix
 /
+
+-- Nueva validación de Baja para JUGADOR
+-- Verifica que la contraseña coincida al intentar dar de baja
+CREATE OR REPLACE TRIGGER TRG_BAJA_JUGADOR
+BEFORE UPDATE ON "JUGADOR"
+FOR EACH ROW
+BEGIN
+    IF :NEW."BAJA" = 1 AND :OLD."BAJA" = 0 THEN
+       IF :NEW."CONTRASENA" != :OLD."CONTRASENA" THEN
+          RAISE_APPLICATION_ERROR(-20004, 'Contraseña incorrecta para dar de baja.');
+       END IF;
+    END IF;
+END; -- django fix
+/
+
