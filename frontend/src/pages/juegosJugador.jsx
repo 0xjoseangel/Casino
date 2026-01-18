@@ -23,7 +23,6 @@ const JuegosJugador = () => {
             case 'tragaperras':
                 return 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=600&q=80';
             case 'ruleta':
-                // Ruleta de casino real (Madera y paño verde)
                 return 'https://images.unsplash.com/photo-1625888791210-40ea41c1d0f3?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
             case 'cartas':
                 return 'https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=600&q=80';

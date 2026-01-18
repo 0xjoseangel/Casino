@@ -87,6 +87,7 @@ const JuegosAdmin = () => {
               <thead>
                 <tr>
                   <th>Nombre / Tipo</th>
+                  <th>Rentabilidad</th> 
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -95,6 +96,13 @@ const JuegosAdmin = () => {
                 {juegos.length > 0 ? juegos.map(j => (
                   <tr key={j.id} style={{ opacity: j.estado ? 1 : 0.6 }}>
                     <td><strong>{j.nombre}</strong><br/><small>{j.tipo}</small></td>
+                    {/* Nueva celda de rentabilidad */}
+                    <td style={{ 
+                      fontWeight: 'bold', 
+                      color: j.rentabilidad >= 0 ? '#2ecc71' : '#e74c3c' 
+                    }}>
+                      {j.rentabilidad !== undefined ? `${j.rentabilidad}€` : '0.00€'}
+                    </td>
                     <td>
                       <span className={`badge ${j.estado ? 'badge-success' : 'badge-error'}`}>
                         {j.estado ? 'ACTIVO' : 'INACTIVO'}
@@ -104,7 +112,7 @@ const JuegosAdmin = () => {
                       <button onClick={() => prepararEdicion(j)} className="btn btn-sm btn-primary">Modificar</button>
                     </td>
                   </tr>
-                )) : <tr><td colSpan="3">No hay juegos que mostrar</td></tr>}
+                )) : <tr><td colSpan="4">No hay juegos que mostrar</td></tr>}
               </tbody>
             </table>
           </div>
@@ -124,7 +132,7 @@ const JuegosAdmin = () => {
               <select className="form-control" value={formJuego.tipo} onChange={(e) => setFormJuego({...formJuego, tipo: e.target.value})}>
                 <option value="tragaperras">Tragaperras</option>
                 <option value="ruleta">Ruleta</option>
-                <option value="cartas">Cartas</option> {/* <--- OPCIÓN AÑADIDA */}
+                <option value="cartas">Cartas</option>
               </select>
             </div>
             <div className="form-group">

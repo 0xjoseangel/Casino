@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
+from django.db.models import Sum
 
 class Juego(models.Model):
    
@@ -23,6 +24,19 @@ class Juego(models.Model):
     estado = models.BooleanField(default=True, help_text="Activo/Inactivo")
     descripcion = models.CharField(max_length=200)
 
+    @property
+    def rentabilidad(self):
+        # Sumamos todas las apuestas y todas las ganancias de este juego
+        stats = self.apuestas_realizadas.aggregate(
+            total_apostado=Sum('cantidad_apostada'),
+            total_pagado=Sum('ganancia')
+        )
+        
+        apostado = stats['total_apostado'] or 0
+        pagado = stats['total_pagado'] or 0
+        
+        # El beneficio del casino es lo que se quedó
+        return apostado - pagado
     def clean(self):
        
         if self.apuesta_minima > self.apuesta_maxima:
