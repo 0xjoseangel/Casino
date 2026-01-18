@@ -13,7 +13,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20005, 'Error: Las apuestas deben ser valores positivos mayores que cero.');
     END IF;
 
-    IF :NEW."TIPO" NOT IN ('tragaperras', 'ruleta', 'cartas') THEN
+    IF :NEW."TIPO" NOT IN ('tragaperras', 'ruleta', 'cartas','slots', 'poker') THEN
         RAISE_APPLICATION_ERROR(-20006, 'Error: El tipo de juego "' || :NEW."TIPO" || '" no es valido.');
     END IF;
 
