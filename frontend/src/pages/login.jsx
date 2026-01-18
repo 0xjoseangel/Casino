@@ -48,7 +48,7 @@ function Login({ setUsuario }) {
     <div className="login-container">
       <div className="login-card fade-in">
         <div className="login-header">
-          <h1>CASINO ROYALE</h1>
+          <h1>CASINO LASAÑA</h1>
           <p>Ingresa tus credenciales para continuar</p>
         </div>
 
