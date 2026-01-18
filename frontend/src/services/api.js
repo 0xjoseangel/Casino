@@ -30,7 +30,7 @@ export const postData = async (endpoint, data) => {
 // Función genérica para actualizar datos (PUT)
 export const putData = async (endpoint, body) => {
     try {
-        const response = await fetch(`${API_URL}${endpoint}`, {
+        const response = await fetch(`${API_URL}/${endpoint}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
