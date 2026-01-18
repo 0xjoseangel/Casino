@@ -66,7 +66,7 @@ function Home({ usuario }) {
           <h1>Hola, {esAdmin ? 'Administrador' : 'Jugador'}</h1>
           <p>
             {esAdmin
-              ? 'Panel de Control del Sistema - Casino Royale'
+              ? 'Panel de Control del Sistema - Casino Lasaña'
               : 'Bienvenido a la mejor experiencia de juego online.'}
           </p>
         </div>
@@ -163,31 +163,31 @@ function Home({ usuario }) {
           </div>
         </>
       )}
-   
-    {/* ... después de cerrar el contenido principal ... */}
+
+      {/* ... después de cerrar el contenido principal ... */}
 
       {/* FOOTER LEGAL */}
       <footer style={{ backgroundColor: '#1a1a1a', color: 'white', padding: '40px 20px', textAlign: 'center', marginTop: '40px', borderTop: '1px solid #333' }}>
         <div className="logos-legales" style={{ marginBottom: '15px' }}>
-            <span style={{ border: '1px solid white', padding: '5px 10px', borderRadius: '50%', marginRight: '15px', fontWeight: 'bold' }}>+18</span>
-            <strong style={{ marginRight: '15px' }}>JUEGO SEGURO</strong> 
-            <strong>JUGAR BIEN</strong>
+          <span style={{ border: '1px solid white', padding: '5px 10px', borderRadius: '50%', marginRight: '15px', fontWeight: 'bold' }}>+18</span>
+          <strong style={{ marginRight: '15px' }}>JUEGO SEGURO</strong>
+          <strong>JUGAR BIEN</strong>
         </div>
-        
+
         <div className="enlaces-legales" style={{ marginTop: '10px', fontSize: '0.9em' }}>
-            {/* Cambiamos el Link por un botón o un span con cursor pointer */}
-            <span 
-              onClick={() => setMostrarModal(true)} 
-              style={{ color: '#aaa', margin: '0 10px', cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              Política de Privacidad (RGPD)
-            </span> | 
-            <span style={{ color: '#aaa', margin: '0 10px' }}>Términos del Servicio</span> | 
-            <span style={{ color: '#aaa', margin: '0 10px' }}>Juego Responsable</span>
+          {/* Cambiamos el Link por un botón o un span con cursor pointer */}
+          <span
+            onClick={() => setMostrarModal(true)}
+            style={{ color: '#aaa', margin: '0 10px', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            Política de Privacidad (RGPD)
+          </span> |
+          <span style={{ color: '#aaa', margin: '0 10px' }}>Términos del Servicio</span> |
+          <span style={{ color: '#aaa', margin: '0 10px' }}>Juego Responsable</span>
         </div>
-        
+
         <p style={{ fontSize: '0.75em', color: '#666', marginTop: '20px', maxWidth: '800px', margin: '20px auto 0' }}>
-            Este casino opera bajo la licencia de la DGOJ. La base de datos está registrada conforme a la normativa de la AEPD.
+          Este casino opera bajo la licencia de la DGOJ. La base de datos está registrada conforme a la normativa de la AEPD.
         </p>
       </footer>
 
@@ -203,13 +203,13 @@ function Home({ usuario }) {
             maxWidth: '600px', width: '90%', maxHeight: '80vh', overflowY: 'auto',
             border: '1px solid #ffd700', position: 'relative', color: '#eee'
           }}>
-            <button 
+            <button
               onClick={() => setMostrarModal(false)}
               style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ffd700', fontSize: '1.5em', cursor: 'pointer' }}
             >
               ×
             </button>
-            
+
             <h2 style={{ color: '#ffd700' }}>Política de Privacidad (RGPD)</h2>
             <p><strong>Responsable:</strong> Casino Royale S.A.</p>
             <p><strong>Finalidad:</strong> Gestión de apuestas y cumplimiento de la Ley de Ordenación del Juego.</p>
@@ -217,8 +217,8 @@ function Home({ usuario }) {
             <p><strong>Derechos:</strong> Puede ejercer sus derechos ARCO (Acceso, Rectificación, Cancelación y Oposición) contactando con nuestro delegado de protección de datos.</p>
             <hr style={{ borderColor: '#444' }} />
             <p style={{ fontSize: '0.8em' }}>Este casino cumple con las normativas de la AEPD y la DGOJ.</p>
-            
-            <button 
+
+            <button
               onClick={() => setMostrarModal(false)}
               style={{ backgroundColor: '#ffd700', color: '#000', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer', marginTop: '10px', fontWeight: 'bold' }}
             >
@@ -228,7 +228,7 @@ function Home({ usuario }) {
         </div>
       )}
     </div> // Cierre de fade-in
-    
+
   );
 }
 
