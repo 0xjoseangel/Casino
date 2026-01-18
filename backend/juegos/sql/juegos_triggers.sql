@@ -18,4 +18,4 @@ BEGIN
     END IF;
 
     :NEW."NOMBRE" := UPPER(:NEW."NOMBRE");
-END;
+END; -- django fix
