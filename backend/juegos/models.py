@@ -3,9 +3,12 @@ from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 
 class Juego(models.Model):
-    # ... (nombre y tipo se mantienen igual)
+   
     nombre = models.CharField(max_length=40, unique=True)
-    
+    class Meta:
+        db_table = 'JUEGO' 
+        verbose_name = 'Juego'
+        verbose_name_plural = 'Juegos'
     TIPO_CHOICES = [
         ('tragaperras', 'Tragaperras'),
         ('ruleta', 'Ruleta'),
