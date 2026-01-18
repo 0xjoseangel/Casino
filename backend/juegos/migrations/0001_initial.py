@@ -49,5 +49,10 @@ class Migration(migrations.Migration):
                 ),
                 ("descripcion", models.CharField(max_length=200)),
             ],
+            options={
+                "verbose_name": "Juego",
+                "verbose_name_plural": "Juegos",
+                "db_table": "JUEGO",
+            },
         ),
     ]
