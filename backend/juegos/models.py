@@ -17,7 +17,6 @@ class Juego(models.Model):
     ]
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
 
-    # Añadimos MinValueValidator para validación en formularios/admin
     apuesta_minima = models.FloatField(validators=[MinValueValidator(0.01)])
     apuesta_maxima = models.FloatField(validators=[MinValueValidator(0.01)])
 
@@ -26,7 +25,6 @@ class Juego(models.Model):
 
     @property
     def rentabilidad(self):
-        # Sumamos todas las apuestas y todas las ganancias de este juego
         stats = self.apuestas_realizadas.aggregate(
             total_apostado=Sum('cantidad_apostada'),
             total_pagado=Sum('ganancia')
@@ -35,7 +33,6 @@ class Juego(models.Model):
         apostado = stats['total_apostado'] or 0
         pagado = stats['total_pagado'] or 0
         
-        # El beneficio del casino es lo que se quedó
         return apostado - pagado
     def clean(self):
        

@@ -8,7 +8,7 @@ const JuegosJugador = () => {
     const [orden, setOrden] = useState('nombre');
     const navigate = useNavigate();
 
-    
+
     const colores = {
         fondo: '#0a0a0a',
         tarjeta: '#141414',
@@ -17,7 +17,7 @@ const JuegosJugador = () => {
         texto: '#ffffff'
     };
 
-    
+
     const obtenerImagenDefecto = (tipo) => {
         switch (tipo) {
             case 'tragaperras':
@@ -101,7 +101,7 @@ const JuegosJugador = () => {
                     ROYAL CASINO
                 </h1>
                 <div style={{ height: '3px', width: '120px', background: colores.dorado, margin: '20px auto' }}></div>
-                
+
                 <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '25px' }}>
                     <span style={{ color: colores.dorado, fontWeight: 'bold', fontSize: '0.8rem', letterSpacing: '2px' }}>ORDENAR POR</span>
                     <select className="filter-select" value={orden} onChange={(e) => setOrden(e.target.value)}>
@@ -111,17 +111,17 @@ const JuegosJugador = () => {
                 </div>
             </header>
 
-            <div className="modules-grid" style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
-                gap: '40px', 
-                maxWidth: '1300px', 
-                margin: '0 auto' 
+            <div className="modules-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                gap: '40px',
+                maxWidth: '1300px',
+                margin: '0 auto'
             }}>
                 {juegosOrdenados.map(juego => (
-                    <div key={juego.id} className="module-card" style={{ 
-                        padding: 0, 
-                        overflow: 'hidden', 
+                    <div key={juego.id} className="module-card" style={{
+                        padding: 0,
+                        overflow: 'hidden',
                         background: colores.tarjeta,
                         border: '1px solid #222'
                     }}>
@@ -130,20 +130,20 @@ const JuegosJugador = () => {
                             <div className="game-description-overlay">
                                 <p>{juego.descripcion || "Disfruta de la máxima exclusividad en cada jugada. La fortuna te espera en Royal Casino."}</p>
                             </div>
-                            <div style={{ 
-                                position: 'absolute', top: '20px', left: '20px', background: colores.dorado, 
+                            <div style={{
+                                position: 'absolute', top: '20px', left: '20px', background: colores.dorado,
                                 padding: '4px 14px', color: '#000', fontSize: '0.7rem',
                                 fontWeight: '900', zIndex: 2, borderRadius: '2px', letterSpacing: '1px'
                             }}>
                                 {juego.tipo.toUpperCase()}
                             </div>
                         </div>
-                        
+
                         <div style={{ padding: '30px', textAlign: 'center' }}>
                             <h3 style={{ color: colores.texto, margin: '0 0 25px 0', fontSize: '1.6rem', fontWeight: '300', letterSpacing: '2px' }}>
                                 {juego.nombre.toUpperCase()}
                             </h3>
-                            <button 
+                            <button
                                 className="btn-play"
                                 style={{ width: '100%' }}
                                 onClick={() => navigate(`/mis-apuestas?juegoId=${juego.id}`)}

@@ -224,7 +224,6 @@ class CompiteViewSet(viewsets.ModelViewSet):
         torneo_id = request.data.get('torneo')
         jugador_dni = request.data.get('jugador')
 
-        # Verificar que el torneo existe y está abierto
         try:
             torneo = Torneo.objects.get(pk=torneo_id)
         except Torneo.DoesNotExist:
@@ -239,7 +238,6 @@ class CompiteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Verificar aforo
         inscritos = Compite.objects.filter(torneo=torneo).count()
         if inscritos >= torneo.aforo_maximo:
             return Response(
@@ -247,14 +245,12 @@ class CompiteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Verificar doble inscripción
         if Compite.objects.filter(torneo_id=torneo_id, jugador_id=jugador_dni).exists():
             return Response(
                 {'error': 'Ya estás inscrito en este torneo'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Obtener el jugador y verificar saldo suficiente
         try:
             jugador = Jugador.objects.get(pk=jugador_dni)
         except Jugador.DoesNotExist:
@@ -270,7 +266,6 @@ class CompiteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Cobrar la inscripción y crear la relación en una transacción atómica
         with transaction.atomic():
             jugador.cartera_monetaria -= int(precio)
             jugador.save()

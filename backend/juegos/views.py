@@ -6,7 +6,6 @@ from .models import Juego
 from .serializers import JuegoSerializer
 
 class JuegoViewSet(viewsets.ModelViewSet):
-    # El queryset base debe permitir ver todo para que las ediciones (PUT) encuentren el ID
     queryset = Juego.objects.all()
     serializer_class = JuegoSerializer
     permission_classes = [AllowAny]
@@ -16,15 +15,12 @@ class JuegoViewSet(viewsets.ModelViewSet):
         if self.action != 'list':
             return Juego.objects.all()
             
-        # Comprobamos si el frontend envía el parámetro ?admin=true
         es_admin = self.request.query_params.get('admin', None)
         if es_admin:
             return Juego.objects.all()
             
-        # Para el catálogo del jugador (RF2.5)
         return Juego.objects.filter(estado=True)
 
-    # RF2.2: Deshabilitar juego
     @action(detail=True, methods=['post'])
     def deshabilitar(self, request, pk=None):
         juego = self.get_object()

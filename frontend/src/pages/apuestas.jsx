@@ -5,16 +5,15 @@ function Apuestas() {
   const idDesdeUrl = new URLSearchParams(window.location.search).get('juegoId');
   const [apuestas, setApuestas] = useState([]);
   const [juegos, setJuegos] = useState([]);
-  const [jugadoresList, setJugadoresList] = useState([]); // Lista para el dropdown de admin
+  const [jugadoresList, setJugadoresList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [jugador, setJugador] = useState(null);
 
-  // Estado para admin
   const [esAdmin, setEsAdmin] = useState(false);
   const [filtroUsuario, setFiltroUsuario] = useState('');
 
-  // Estado de sesión
+
   const [sesionActiva, setSesionActiva] = useState(false);
   const [sesionData, setSesionData] = useState(null);
 
@@ -24,7 +23,6 @@ function Apuestas() {
   });
 
   useEffect(() => {
-    // Obtener el jugador logueado del localStorage
     const usuarioGuardado = localStorage.getItem('casino_usuario');
     if (usuarioGuardado) {
       const usuario = JSON.parse(usuarioGuardado);
@@ -32,10 +30,9 @@ function Apuestas() {
       setEsAdmin(usuario.rol === 'admin');
     }
     cargarDatos();
-  }, [filtroUsuario]); // Recargar si cambia el filtro
+  }, [filtroUsuario]);
 
   const cargarDatos = async () => {
-    // Obtener info del usuario para la query
     const usuarioGuardado = localStorage.getItem('casino_usuario');
     let queryParams = '';
     let isAdmin = false;
@@ -51,21 +48,13 @@ function Apuestas() {
         }
       } else {
         queryParams = `?usuario=${usuario.dni}`;
-        // REFRESCAR DATOS DEL JUGADOR (Saldo actualizado)
-        // Usamos el endpoint de jugadores con filtro DNI o get directo si estuviera implementado detalle
-        // Pero como JugadorViewSet es ModelViewSet, podemos pedir lista filtrada o detalle.
-        // Asumimos que tenemos acceso a listar.
+
         const resUser = await getData(`/usuarios/jugadores/?dni=${usuario.dni}`);
-        // ModelViewSet con ?dni=... (si filtramos en get_queryset) o si el filtro standard de django funcionas
-        // Pero espera, JugadorViewSet no tiene get_queryset con filtro explicito de query param 'dni', 
-        // pero usa ModelViewSet standard.
-        // Mejor intento: Pedir el detalle directo si DNI es PK.
-        // Pedir el detalle directo
+
         const resDetalle = await getData(`usuarios/jugadores/${usuario.dni}/?t=${new Date().getTime()}`);
         console.log("🔄 REFRESCO JUGADOR:", resDetalle);
 
         if (resDetalle && !resDetalle.error) {
-          // Asegurarnos de que cartera_monetaria esté presente
           if (resDetalle.cartera_monetaria !== undefined) {
             console.log("✅ Saldo actualizado a:", resDetalle.cartera_monetaria);
             setJugador(prev => ({ ...prev, ...resDetalle }));
@@ -75,22 +64,18 @@ function Apuestas() {
       }
     }
 
-    // Cargar apuestas (pasando contexto)
     const resApuestas = await getData(`movimientos/apuestas/${queryParams}`);
     if (resApuestas && !resApuestas.error) {
       setApuestas(resApuestas);
     }
 
-    // Si es admin, cargar lista de jugadores para el filtro
     if (isAdmin) {
       const resJug = await getData('usuarios/jugadores/');
       if (resJug && !resJug.error) setJugadoresList(resJug);
     }
 
-    // Cargar juegos disponibles
-    const resJuegos = await getData('juegos/juegos/'); // removed leading slash to be safe
+    const resJuegos = await getData('juegos/juegos/');
 
-    // DEFINU JUEGOS FALLBACK para robustez
     const JUEGOS_FALLBACK = [
       { id: 1, nombre: 'Ruleta', estado: true },
       { id: 2, nombre: 'Blackjack', estado: true },
@@ -104,10 +89,8 @@ function Apuestas() {
       console.log("⚠️ API JUEGOS falló o vacía, usando fallback");
       setJuegos(JUEGOS_FALLBACK);
     }
-    // Cargar sesiones para comprobar si hay una activa
     if (usuarioGuardado && !isAdmin) {
       const usuario = JSON.parse(usuarioGuardado);
-      // Usamos el filtro que acabamos de implementar en el backend
       const resSesion = await getData(`sesiones/listado/?usuario=${usuario.dni}&activa=true`);
       if (resSesion && Array.isArray(resSesion) && resSesion.length > 0) {
         setSesionActiva(true);
@@ -117,7 +100,6 @@ function Apuestas() {
         setSesionData(null);
       }
     } else {
-      // Admin o sin login -> no aplica (o admin siempre puede ver cosas pero no juega)
       setSesionActiva(false);
     }
 
@@ -141,7 +123,6 @@ function Apuestas() {
 
     const cantidadNum = parseFloat(form.cantidad_apostada);
 
-    // Validaciones Locales
     if (cantidadNum < 10) {
       alert('La apuesta mínima es de 10€.');
       setEnviando(false);
@@ -154,16 +135,13 @@ function Apuestas() {
       return;
     }
 
-    // Validar Saldo
     if (sesionActiva && sesionData) {
-      // Validar contra saldo de sesión
       if (cantidadNum > parseFloat(sesionData.saldo_actual)) {
         alert(`⚠️ Saldo de sesión insuficiente (${sesionData.saldo_actual}€).`);
         setEnviando(false);
         return;
       }
     } else {
-      // Validar contra saldo global (fallback, aunque no debería usarse si hay sesión obligatoria)
       if (jugador && cantidadNum > jugador.cartera_monetaria) {
         alert('⚠️ Saldo insuficiente en tu cartera.');
         setEnviando(false);
@@ -180,7 +158,6 @@ function Apuestas() {
     const resultado = await postData('movimientos/apuestas/', datosApuesta);
 
     if (resultado && !resultado.error && resultado.id) {
-      // Verificar ganancia (viene del backend en la respuesta)
       const ganancia = parseFloat(resultado.ganancia);
 
       if (ganancia > 0) {
@@ -190,9 +167,8 @@ function Apuestas() {
       }
 
       setForm({ juego: '', cantidad_apostada: '' });
-      await cargarDatos(); // Esperar a que recargue para ver nuevo saldo sesión
+      await cargarDatos();
     } else {
-      // Intentar mostrar el mensaje detallado del backend
       let msg = 'Error al apostar. Revisa tu saldo disponible.';
       if (Array.isArray(resultado) && resultado.length > 0) {
         msg = resultado[0];
@@ -206,14 +182,9 @@ function Apuestas() {
     setEnviando(false);
   };
 
-  // Filtrar apuestas: Si es admin y NO filtra, ve todo. Si filtra, ve solo ese usuario. Si es jugador, solo lo suyo.
-  // Pero como ya lo hemos filtrado en el backend, aquí solo necesitamos mostrarlas todas las que vengan en 'apuestas'
-  // El filtro de .filter() anterior era lo que escondía las cosas al Admin, porque el Admin no tenia dni coincidente.
+
   const apuestasAMostrar = apuestas;
-  /* 
-     NOTA: Antes filtrábamos aquí por DNI.
-     Ahora confiamos en lo que nos manda el backend según la query.
-  */
+
 
   if (loading) {
     return (

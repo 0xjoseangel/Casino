@@ -19,7 +19,6 @@ class Migration(migrations.Migration):
                 for statement in load_sql_from_file('triggers_apuestas.sql').split('/') 
                 if statement.strip()
             ],
-            # No reverse SQL needed for now
             reverse_sql=""
         ),
     ]

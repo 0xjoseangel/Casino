@@ -14,7 +14,6 @@ class PromocionSerializer(serializers.ModelSerializer):
         fecha_inicio = data.get('fecha_inicio')
         fecha_fin = data.get('fecha_fin')
 
-        # En updates parciales, obtener valores existentes si no vienen en data
         if self.instance:
             fecha_inicio = fecha_inicio or self.instance.fecha_inicio
             fecha_fin = fecha_fin or self.instance.fecha_fin
@@ -59,7 +58,6 @@ class TorneoSerializer(serializers.ModelSerializer):
         """
         fecha_inicio = data.get('fecha_inicio')
 
-        # En updates parciales, obtener valor existente
         if self.instance and not fecha_inicio:
             fecha_inicio = self.instance.fecha_inicio
 
@@ -77,14 +75,12 @@ class ParticipaSerializer(serializers.ModelSerializer):
         jugador = data.get('jugador')
         promocion = data.get('promocion')
 
-        # Verificar duplicados solo en creación
         if not self.instance:
             if Participa.objects.filter(jugador=jugador, promocion=promocion).exists():
                 raise serializers.ValidationError(
                     'Ya estás inscrito en esta promoción.'
                 )
 
-        # Verificar que la promoción está activa
         if promocion and not promocion.estado:
             raise serializers.ValidationError(
                 'No puedes inscribirte a una promoción inactiva.'
@@ -108,14 +104,12 @@ class CompiteSerializer(serializers.ModelSerializer):
         jugador = data.get('jugador')
         torneo = data.get('torneo')
 
-        # Verificar duplicados solo en creación
         if not self.instance:
             if Compite.objects.filter(jugador=jugador, torneo=torneo).exists():
                 raise serializers.ValidationError(
                     'Ya estás inscrito en este torneo.'
                 )
 
-        # Verificar que el torneo permite inscripciones
         if torneo and torneo.estado not in ['programado', 'abierto']:
             raise serializers.ValidationError(
                 'Este torneo no admite nuevas inscripciones.'

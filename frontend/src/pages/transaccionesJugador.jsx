@@ -3,7 +3,7 @@ import { getData, postData } from '../services/api';
 
 function TransaccionesJugador() {
     const [transacciones, setTransacciones] = useState([]);
-    const [jugadores, setJugadores] = useState([]); // Para desplegable de transferencias
+    const [jugadores, setJugadores] = useState([]);
     const [loading, setLoading] = useState(true);
     const [usuario, setUsuario] = useState(null);
 
@@ -23,27 +23,21 @@ function TransaccionesJugador() {
 
         const userLocal = JSON.parse(usuarioGuardado);
 
-        // 1. Cargar Perfil Actualizado (para asegurar saldo real)
-        const resPerfil = await getData(`usuarios/perfil/?dni=${userLocal.dni}`); // Asumiendo endpoint perfil
-        // Si no existe endpoint específico, usamos userLocal pero idealmente refrescaríamos
-        // Voy a intentar refrescar con usuarios/jugadores/ filtrado si perfil no va, 
-        // pero lo más seguro es que el endpoint de login devolvía todo.
-        // MEJOR ESTRATEGIA: Cargar lista de jugadores y buscarme a mí mismo para tener el saldo fresco.
+        const resPerfil = await getData(`usuarios/perfil/?dni=${userLocal.dni}`);
 
         const resJug = await getData('usuarios/jugadores/');
         if (resJug && !resJug.error) {
             setJugadores(resJug);
             const miPerfil = resJug.find(j => j.dni === userLocal.dni);
             if (miPerfil) {
-                setUsuario(miPerfil); // Actualizamos con datos frescos de la BD
+                setUsuario(miPerfil);
             } else {
-                setUsuario(userLocal); // Fallback
+                setUsuario(userLocal);
             }
         } else {
             setUsuario(userLocal);
         }
 
-        // 2. Cargar Transacciones del Jugador
         const resTrans = await getData(`movimientos/transacciones/?usuario=${userLocal.dni}`);
         if (resTrans && Array.isArray(resTrans)) {
             setTransacciones(resTrans);
@@ -58,13 +52,12 @@ function TransaccionesJugador() {
 
         const cantidadNum = parseFloat(form.cantidad);
 
-        // Validaciones
+
         if (cantidadNum <= 0) {
             alert('La cantidad debe ser mayor a 0.');
             return;
         }
 
-        // Validación depósito máximo
         if (form.tipo === 'DEPOSITO' && cantidadNum > 10000) {
             alert('⚠️ El depósito máximo permitido es de 10.000€.');
             return;
@@ -75,9 +68,8 @@ function TransaccionesJugador() {
             return;
         }
 
-        // Preparamos payload
         const payload = {
-            usuario: usuario.dni, // El usuario que hace la operación soy YO
+            usuario: usuario.dni,
             tipo: form.tipo,
             cantidad: form.cantidad,
             destinatario: form.destinatario
@@ -88,7 +80,7 @@ function TransaccionesJugador() {
         if (resultado && !resultado.error) {
             alert('Operación realizada con éxito');
             setForm({ ...form, cantidad: '', destinatario: '' });
-            cargarDatos(); // Recargar historial Y SALDO
+            cargarDatos();
         } else {
             alert('Error en la operación. Revisa los datos o tu saldo.');
         }
@@ -163,7 +155,7 @@ function TransaccionesJugador() {
                             >
                                 <option value="">Seleccionar destinatario</option>
                                 {jugadores.map(j => (
-                                    j.dni !== usuario?.dni && ( // No transferir a uno mismo
+                                    j.dni !== usuario?.dni && (
                                         <option key={j.dni} value={j.dni}>
                                             {j.nombre} {j.apellidos}
                                         </option>

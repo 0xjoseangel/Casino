@@ -2,7 +2,6 @@ from django.db import migrations
 import os
 
 def load_sql_from_file(filename):
-    # Construct absolute path to the sql directory
     migration_dir = os.path.dirname(os.path.abspath(__file__))
     app_dir = os.path.dirname(migration_dir)
     sql_dir = os.path.join(app_dir, 'sql')

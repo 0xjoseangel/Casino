@@ -1,4 +1,3 @@
--- Disparador para validar DNI en JUGADOR
 CREATE OR REPLACE TRIGGER TRG_CHECK_DNI_JUGADOR
 BEFORE INSERT OR UPDATE ON "JUGADOR"
 FOR EACH ROW
@@ -9,7 +8,6 @@ BEGIN
 END; -- django fix
 /
 
--- Disparador para validar Edad en JUGADOR (Mayor de 18)
 CREATE OR REPLACE TRIGGER TRG_CHECK_EDAD_JUGADOR
 BEFORE INSERT OR UPDATE ON "JUGADOR"
 FOR EACH ROW
@@ -23,7 +21,6 @@ BEGIN
 END; -- django fix
 /
 
--- Disparador para validar DNI en ADMINISTRADOR
 CREATE OR REPLACE TRIGGER TRG_CHECK_DNI_ADMIN
 BEFORE INSERT OR UPDATE ON "ADMINISTRADOR"
 FOR EACH ROW
@@ -34,8 +31,6 @@ BEGIN
 END; -- django fix
 /
 
--- Nueva validación de Baja para JUGADOR
--- Verifica que la contraseña coincida al intentar dar de baja
 CREATE OR REPLACE TRIGGER TRG_BAJA_JUGADOR
 BEFORE UPDATE ON "JUGADOR"
 FOR EACH ROW

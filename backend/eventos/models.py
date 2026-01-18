@@ -11,20 +11,17 @@ class Promocion(models.Model):
         ('Cashback', 'Cashback'),
     ]
 
-    # Usamos AutoField para el ID, Django lo gestiona solo
     nombre = models.CharField(max_length=50, unique=True)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     condiciones = models.TextField(verbose_name="Condiciones/Requisitos")
-    # Beneficio es cadena (ej: "10%" o "20 euros")
     beneficio = models.CharField(max_length=20) 
     max_jugadores = models.PositiveIntegerField(default=0, help_text="0 para ilimitado")
     estado = models.BooleanField(default=False, help_text="Activo (True) / Inactivo (False)")
     fecha_activacion = models.DateField(null=True, blank=True)
     fecha_creacion = models.DateField(auto_now_add=True)
 
-    # Relación N:M con Jugador 
     jugadores = models.ManyToManyField(
         'usuarios.Jugador', 
         through='Participa',
@@ -46,7 +43,6 @@ class Torneo(models.Model):
     ]
 
     nombre = models.CharField(max_length=50, unique=True)
-    # Relación con el módulo de Minerva (Juegos)
     juego = models.ForeignKey('juegos.Juego', on_delete=models.CASCADE)
     fecha_inicio = models.DateField()
     hora_inicio = models.TimeField()
@@ -56,7 +52,6 @@ class Torneo(models.Model):
     premio = models.CharField(max_length=50) # Ej: "1000€" o "Coche"
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='programado')
 
-    # Relación N:M con Jugador
     participantes = models.ManyToManyField(
         'usuarios.Jugador',
         through='Compite',
@@ -85,7 +80,6 @@ class Compite(models.Model):
     """
     jugador = models.ForeignKey('usuarios.Jugador', on_delete=models.CASCADE)
     torneo = models.ForeignKey(Torneo, on_delete=models.CASCADE)
-    # La posición puede ser nula al principio, se rellena al finalizar el torneo
     posicion = models.PositiveIntegerField(null=True, blank=True) 
 
     class Meta:

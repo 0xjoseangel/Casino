@@ -5,7 +5,7 @@ function Torneos() {
   const [torneos, setTorneos] = useState([]);
   const [juegos, setJuegos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modalInscritos, setModalInscritos] = useState(null); // Para mostrar modal de inscritos
+  const [modalInscritos, setModalInscritos] = useState(null);
   const [form, setForm] = useState({
     nombre: '',
     juego: '',
@@ -69,10 +69,10 @@ function Torneos() {
       cargarTorneos();
     } else {
       const mensaje = resultado?.precio_inscripcion?.[0] ||
-                     resultado?.aforo_maximo?.[0] ||
-                     resultado?.juego?.[0] ||
-                     resultado?.nombre?.[0] ||
-                     'Error al crear el torneo. Revisa los campos.';
+        resultado?.aforo_maximo?.[0] ||
+        resultado?.juego?.[0] ||
+        resultado?.nombre?.[0] ||
+        'Error al crear el torneo. Revisa los campos.';
       alert(mensaje);
     }
   };

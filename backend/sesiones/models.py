@@ -4,20 +4,17 @@ from django.utils import timezone
 from datetime import timedelta
 from usuarios.models import Jugador
 class Sesion(models.Model):
-    # Relación con el Jugador (Usuario)
     usuario = models.ForeignKey(
         Jugador,
         on_delete=models.CASCADE,
         related_name='sesiones',
-        db_column='DNI_JUGADOR'  # Mapeo al campo DNI del diseño 
+        db_column='DNI_JUGADOR'  
     )
 
-    # Datos de inicio 
     fecha_actual = models.DateField(auto_now_add=True)
     hora_inicio = models.TimeField(auto_now_add=True)
     saldo_inicio = models.DecimalField(max_digits=10, decimal_places=2)
 
-    # Reglas de Juego Responsable 
     regla1_limite_gasto_diario = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
@@ -29,19 +26,16 @@ class Sesion(models.Model):
         help_text="Límite de operaciones por hora"
     )
 
-    # Datos de fin 
     saldo_final = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     hora_fin = models.TimeField(null=True, blank=True)
     duracion_sesion = models.DurationField(null=True, blank=True)
 
-    # Estado para control interno (Activa/Cerrada)
     activa = models.BooleanField(default=True)
 
     class Meta:
         db_table = 'SESION'
         ordering = ['-fecha_actual', '-hora_inicio']
-        # Validamos que no se solapen sesiones activas lógicamente en views,
-        # pero aquí definimos la estructura física.
+
 
     def finalizar_sesion(self, saldo_actual):
         """
@@ -52,8 +46,7 @@ class Sesion(models.Model):
         self.saldo_final = saldo_actual
         self.activa = False
     
-        # Cálculo de duración aproximada
-        # Nota: En un entorno real sumaríamos fecha+hora para delta preciso.
+
         start_dt = timezone.datetime.combine(self.fecha_actual, self.hora_inicio)
         end_dt = timezone.datetime.combine(now.date(), self.hora_fin)
         self.duracion_sesion = end_dt - start_dt
@@ -84,7 +77,7 @@ class Sesion(models.Model):
         RF5.3: Calcular ganancias o pérdidas.
         """
         if self.saldo_final is None:
-            return 0 # O calcular contra saldo actual en tiempo real
+            return 0
         return self.saldo_final - self.saldo_inicio
 
     def __str__(self):

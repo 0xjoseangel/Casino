@@ -5,7 +5,7 @@ import { getData, putData } from '../services/api';
 function AdminUsuarios() {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeMenu, setActiveMenu] = useState(null); // DNI del usuario cuyo menú está abierto
+    const [activeMenu, setActiveMenu] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [editMode, setEditMode] = useState(false);
     const [editForm, setEditForm] = useState({});
@@ -33,17 +33,14 @@ function AdminUsuarios() {
         if (!window.confirm(`¿Estás seguro de que quieres ${accion} al usuario con DNI ${jugador.dni}?`)) return;
 
         try {
-            // URL base
             const baseUrl = `http://127.0.0.1:8000/api/usuarios/jugadores/${jugador.dni}`;
             let url, method, body;
 
             if (nuevoEstado) {
-                // Dar de baja (RF1.2 usando flag admin)
                 url = `${baseUrl}/baja_jugador/`;
                 method = 'POST';
                 body = { es_admin: true };
             } else {
-                // Dar de alta (RF_EXTRA)
                 url = `${baseUrl}/alta_jugador/`;
                 method = 'POST';
                 body = {};
@@ -58,7 +55,6 @@ function AdminUsuarios() {
             });
 
             if (response.ok) {
-                // Actualizar localmente
                 setUsuarios(usuarios.map(u =>
                     u.dni === jugador.dni ? { ...u, baja: nuevoEstado } : u
                 ));
@@ -102,7 +98,6 @@ function AdminUsuarios() {
         setActiveMenu(activeMenu === dni ? null : dni);
     };
 
-    // Click fuera para cerrar menú
     useEffect(() => {
         const handleClickOutside = () => setActiveMenu(null);
         document.addEventListener('click', handleClickOutside);

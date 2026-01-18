@@ -125,34 +125,26 @@ class JuegaViewSet(viewsets.ModelViewSet):
         from decimal import Decimal
 
         with transaction.atomic():
-            # 1. Obtener datos básicos
             usuario_apostador = serializer.validated_data['usuario']
             juego = serializer.validated_data['juego']
             cantidad = serializer.validated_data['cantidad_apostada']
             sesion_activa = None
 
-            # 2. VINCULACIÓN DE SESIÓN
             if Sesion:
                 sesion_activa = Sesion.objects.filter(usuario=usuario_apostador, activa=True).first()
             
-            # NUEVO: Si no hay sesión, no se puede apostar.
             if not sesion_activa:
                 from rest_framework.exceptions import ValidationError
                 raise ValidationError("Debes iniciar una sesión de juego para poder apostar.")
 
-            # NUEVO: VALIDAR SALDO DE LA SESIÓN (NO DE LA CARTERA)
-            # El dinero ya está "en la sesión", así que verificamos si le queda saldo
             if sesion_activa.saldo_actual < cantidad:
                  from rest_framework.exceptions import ValidationError
                  raise ValidationError(f"Saldo de sesión insuficiente ({sesion_activa.saldo_actual}€).")
 
-            # 3. Guardamos la apuesta INICIAL (sin ganancia aun)
             apuesta = serializer.save(sesion=sesion_activa)
             
-            # 4. LÓGICA DE JUEGO (Probabilidad y Multiplicadores)
-            # Definir multiplicadores y probabilidad (1/X)
-            multiplicador = 2.0 # Default
-            probabilidad = 0.5  # Default
+            multiplicador = 2.0 
+            probabilidad = 0.5  
             
             nombre_juego = juego.nombre.lower()
             
@@ -169,57 +161,41 @@ class JuegaViewSet(viewsets.ModelViewSet):
                 multiplicador = 10.0
                 probabilidad = 0.10
             
-            # Tirada de suerte
             suerte = random.random() # 0.0 a 1.0
             ganancia = 0
             
             print(f"🎲 JUEGO: {juego.nombre} | APUESTA: {cantidad} | MULT: x{multiplicador} | PROB: {probabilidad:.4f} | RND: {suerte:.4f}")
 
             if suerte < probabilidad:
-                # GANADOR
-                ganancia = cantidad * Decimal(str(multiplicador)) # Decimal conversion for safety
+                ganancia = cantidad * Decimal(str(multiplicador)) 
                 print(f"   🎉 ¡GANADOR! Premio: {ganancia}")
             else:
                 print("   ❌ No hubo suerte")
 
-            # Actualizar la apuesta con la ganancia
             apuesta.ganancia = ganancia
             apuesta.save()
 
-            # 5. ACTUALIZAR SALDO (YA NO TOCAMOS JUGADOR, SE TOCA 'VIRTUALMENTE' EN LA SESIÓN)
-            # La propiedad sesion.saldo_actual se calcula dinámicamente, así que 
-            # al guardar la apuesta con ganancia/perdida, el saldo se actualiza solo.
-            
-            # usuario.save() <-- ELIMINADO: No tocamos la cartera global aquí
-
-            # --- RF: PROMOCIONES (CASHBACK) ---
             from eventos.models import Promocion
             import re
             
-            usuario = usuario_apostador # Asignamos la variable para el bloque de promociones
+            usuario = usuario_apostador 
 
-            # Buscar si el usuario participa en alguna promo de 'Cashback' activa
-            # Filter traverses: usuario -> participa -> promocion
             promociones_activas = usuario.promociones.filter(
                 tipo='Cashback',
                 estado=True,
-                participa__promocion__estado=True # Asegurar doble check
+                participa__promocion__estado=True 
             )
 
             for promo in promociones_activas:
-                # Interpretar beneficio (ej: "10%", "5%")
                 beneficio_str = promo.beneficio
                 porcentaje = 0
                 
-                # Extraer número del string "10%"
                 match = re.search(r'(\d+)', beneficio_str)
                 if match:
                     porcentaje = int(match.group(1))
                 
                 if porcentaje > 0:
                     cashback = cantidad * Decimal(porcentaje) / Decimal(100)
-                    # El cashback SÍ se suele dar a la cuenta ppal o como bono, 
-                    # pero para simplificar, lo sumamos a la cartera global como "premio extra"
                     usuario.cartera_monetaria += cashback
                     usuario.save()
                     print(f"   🎁 PROMO CASHBACK '{promo.nombre}': Devolviendo {cashback}€ ({porcentaje}%)")
@@ -232,7 +208,6 @@ class JuegaViewSet(viewsets.ModelViewSet):
             apuesta_nueva = serializer.save()
             usuario = apuesta_nueva.usuario
             
-            # Calculamos la diferencia para ajustar el saldo
             diferencia_ganancia = apuesta_nueva.ganancia - ganancia_anterior
             
             if diferencia_ganancia != 0:

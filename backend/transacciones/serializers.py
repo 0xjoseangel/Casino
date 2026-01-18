@@ -14,26 +14,21 @@ class TransaccionSerializer(serializers.ModelSerializer):
         if cantidad <= 0:
             raise serializers.ValidationError("La cantidad debe ser positiva.")
 
-        # --- VALIDACIONES DE DEPÓSITO ---
         if tipo == 'DEPOSITO':
              if cantidad > 10000:
                  raise serializers.ValidationError("El depósito máximo permitido es de 10.000€.")
 
-        # --- VALIDACIONES DE RETIRO ---
         if tipo == 'RETIRO':
             if cantidad < 20:
                 raise serializers.ValidationError("El retiro mínimo es de 20€.")
             
-            # CAMBIO AQUÍ: Usamos cartera_monetaria
             if usuario.cartera_monetaria < cantidad:
                 raise serializers.ValidationError(f"Saldo insuficiente. Tienes {usuario.cartera_monetaria}€ y quieres retirar {cantidad}€.")
 
-        # --- VALIDACIONES DE TRANSFERENCIA ---
         if tipo == 'TRANSFERENCIA':
             if not data.get('destinatario'):
                 raise serializers.ValidationError("Las transferencias necesitan un destinatario.")
             
-            # CAMBIO AQUÍ: Usamos cartera_monetaria
             if usuario.cartera_monetaria < cantidad:
                 raise serializers.ValidationError("No tienes saldo suficiente para transferir.")
             
@@ -60,12 +55,10 @@ class JuegaSerializer(serializers.ModelSerializer):
         usuario = data['usuario']
         cantidad = data['cantidad_apostada']
 
-        # 1. No se puede apostar negativo ni cero
         if cantidad <= 0:
             raise serializers.ValidationError("La apuesta debe ser mayor a 0.")
 
 
-        # 2. Rango de Apuestas (RF Nuevo)
         if cantidad < 10:
             raise serializers.ValidationError("La apuesta mínima es de 10€.")
         if cantidad > 1000:

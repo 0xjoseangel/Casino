@@ -7,7 +7,6 @@ function ListaTransacciones() {
   const [jugadores, setJugadores] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Estado para saber si soy admin y filtrar
   const [esAdmin, setEsAdmin] = useState(false);
   const [filtroUsuario, setFiltroUsuario] = useState('');
 
@@ -20,10 +19,9 @@ function ListaTransacciones() {
 
   useEffect(() => {
     cargarDatos();
-  }, [filtroUsuario]); // Recargar si cambia el filtro
+  }, [filtroUsuario]);
 
   const cargarDatos = async () => {
-    // Obtener info del usuario local
     const usuarioGuardado = localStorage.getItem('casino_usuario');
     let queryParams = '';
     let isAdmin = false;
@@ -33,7 +31,6 @@ function ListaTransacciones() {
       isAdmin = usuario.rol === 'admin';
       setEsAdmin(isAdmin);
 
-      // CONSTRUIR QUERY
       if (isAdmin) {
         queryParams = `?rol=admin`;
         if (filtroUsuario) {
@@ -44,7 +41,6 @@ function ListaTransacciones() {
       }
     }
 
-    // 1. Cargar Transacciones
     const resTrans = await getData(`movimientos/transacciones/${queryParams}`);
     if (resTrans && Array.isArray(resTrans)) {
       setTransacciones(resTrans);
@@ -52,7 +48,6 @@ function ListaTransacciones() {
       setTransacciones([]);
     }
 
-    // 2. Cargar Apuestas (Solo Admin)
     if (isAdmin) {
       const resApuestas = await getData(`movimientos/apuestas/${queryParams}`);
       if (resApuestas && Array.isArray(resApuestas)) {

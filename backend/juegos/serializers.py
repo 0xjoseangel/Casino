@@ -3,13 +3,11 @@ from .models import Juego
 from django.db.models import Sum
 
 class JuegoSerializer(serializers.ModelSerializer):
-    # Campo calculado para la rentabilidad (dinero)
     rentabilidad = serializers.SerializerMethodField()
 
     class Meta:
         model = Juego
-        # LISTA DEFINITIVA DE CAMPOS: 
-        # Si un campo no está aquí, React no lo verá jamás.
+
         fields = [
             'id', 
             'nombre', 
@@ -17,7 +15,7 @@ class JuegoSerializer(serializers.ModelSerializer):
             'apuesta_minima', 
             'apuesta_maxima', 
             'estado', 
-            'descripcion',  # <--- Fundamental para que aparezca al modificar
+            'descripcion', 
             'rentabilidad'
         ]
 
@@ -26,7 +24,6 @@ class JuegoSerializer(serializers.ModelSerializer):
         Calcula el beneficio del casino: (Total Apostado - Total Pagado).
         """
         try:
-            # Accedemos a la relación con el modelo Juega de tus compañeros
             stats = obj.apuestas_realizadas.aggregate(
                 total_apostado=Sum('cantidad_apostada'),
                 total_pagado=Sum('ganancia')
@@ -35,13 +32,10 @@ class JuegoSerializer(serializers.ModelSerializer):
             apostado = float(stats['total_apostado'] or 0)
             pagado = float(stats['total_pagado'] or 0)
             
-            # Resultado en euros
             return round(apostado - pagado, 2)
         except Exception:
-            # Si hay error en la relación o base de datos, devolvemos 0
             return 0.0
 
-    # --- VALIDACIONES (RS2.1.4) ---
 
     def validate_apuesta_minima(self, value):
         if value <= 0:

@@ -65,7 +65,6 @@ function PromocionesAdmin() {
   const habilitarPromo = async (id) => {
     const res = await postData(`eventos/promociones/${id}/habilitar/`, {});
     if (res && !res.error) {
-      // Actualizar estado local inmediatamente
       setPromos(prev => prev.map(p =>
         p.id === id ? { ...p, estado: true } : p
       ));
@@ -77,7 +76,6 @@ function PromocionesAdmin() {
   const finalizarPromo = async (id) => {
     const res = await postData(`eventos/promociones/${id}/finalizar/`, {});
     if (res && !res.error) {
-      // Actualizar estado local inmediatamente
       setPromos(prev => prev.map(p =>
         p.id === id ? { ...p, estado: false } : p
       ));
@@ -86,7 +84,6 @@ function PromocionesAdmin() {
     }
   };
 
-  // Ver jugadores inscritos en la promoción
   const verInscritos = async (id) => {
     const res = await getData(`eventos/promociones/${id}/inscritos/`);
     if (res && !res.error) {

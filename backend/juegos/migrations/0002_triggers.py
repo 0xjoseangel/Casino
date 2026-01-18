@@ -3,14 +3,12 @@ from django.conf import settings
 import os
 
 def load_sql_file(file_name):
-    # Search for the sql folder at the project root level
     file_path = os.path.join(os.path.dirname(__file__), '../sql', file_name)
     
     with open(file_path, 'r') as file:
         content = file.read()
         
 
-        # Split by / on its own line, handling potential whitespace
         commands = []
         current_command = []
         for line in content.splitlines():
@@ -23,7 +21,6 @@ def load_sql_file(file_name):
         if current_command:
             commands.append('\n'.join(current_command))
         
-        # Ensure cmds end with ; and have a trailing newline to prevent driver stripping
         final_commands = []
         for cmd in commands:
             if not cmd.strip(): continue
@@ -39,7 +36,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Usamos directamente el string del archivo
         migrations.RunSQL(
             sql=load_sql_file('juegos_triggers.sql'),
             reverse_sql="DROP TRIGGER TR_VALIDAR_APUESTAS"

@@ -6,7 +6,6 @@ function TorneosJugador({ usuario }) {
   const [misInscripciones, setMisInscripciones] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Obtener DNI del usuario logueado
   const miDni = usuario?.dni;
 
   useEffect(() => {
@@ -18,16 +17,13 @@ function TorneosJugador({ usuario }) {
   const cargarDatos = async () => {
     setLoading(true);
 
-    // Cargar torneos
     const dataTorneos = await getData('eventos/torneos/');
     if (Array.isArray(dataTorneos)) {
       setTorneos(dataTorneos);
     }
 
-    // Cargar TODAS las inscripciones y filtrar las del usuario actual
     const dataCompite = await getData('eventos/competiciones/');
     if (Array.isArray(dataCompite)) {
-      // El campo 'jugador' en la API devuelve el DNI (que es la PK)
       const misIds = dataCompite
         .filter(c => String(c.jugador) === String(miDni))
         .map(c => c.torneo);
@@ -51,13 +47,12 @@ function TorneosJugador({ usuario }) {
 
     if (respuesta && !respuesta.error && respuesta.id) {
       alert('Te has inscrito al torneo correctamente');
-      // Actualizar el estado local inmediatamente para cambiar el botón
       setMisInscripciones(prev => [...prev, idTorneo]);
     } else {
       const mensaje = respuesta?.error ||
-                     respuesta?.non_field_errors?.[0] ||
-                     respuesta?.detail ||
-                     'Error al inscribirse. Quizás ya estás apuntado.';
+        respuesta?.non_field_errors?.[0] ||
+        respuesta?.detail ||
+        'Error al inscribirse. Quizás ya estás apuntado.';
       alert(mensaje);
     }
   };
@@ -94,11 +89,10 @@ function TorneosJugador({ usuario }) {
               </div>
 
               <div className="mb-md">
-                <span className={`badge ${
-                  t.estado === 'abierto' ? 'badge-success' :
-                  t.estado === 'programado' ? 'badge-info' :
-                  t.estado === 'en curso' ? 'badge-warning' : 'badge-error'
-                }`}>
+                <span className={`badge ${t.estado === 'abierto' ? 'badge-success' :
+                    t.estado === 'programado' ? 'badge-info' :
+                      t.estado === 'en curso' ? 'badge-warning' : 'badge-error'
+                  }`}>
                   {t.estado.toUpperCase()}
                 </span>
               </div>

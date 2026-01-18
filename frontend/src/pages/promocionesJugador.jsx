@@ -3,10 +3,9 @@ import { getData, postData } from '../services/api';
 
 function PromocionesJugador() {
   const [promos, setPromos] = useState([]);
-  const [joinedPromoIds, setJoinedPromoIds] = useState([]); // Guardamos IDs de promos a las que ya se unió
+  const [joinedPromoIds, setJoinedPromoIds] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Obtener usuario del localStorage
   const usuario = JSON.parse(localStorage.getItem('casino_usuario'));
 
   useEffect(() => {
@@ -17,10 +16,8 @@ function PromocionesJugador() {
 
   const cargarDatos = async () => {
     setLoading(true);
-    // 1. Cargar Promociones
     const dataPromos = await getData('eventos/promociones/');
 
-    // 2. Cargar Participaciones del usuario actual
     const dataParticipaciones = await getData(`eventos/participaciones/?jugador=${usuario.dni}`);
 
     if (Array.isArray(dataPromos)) {
@@ -28,7 +25,6 @@ function PromocionesJugador() {
     }
 
     if (Array.isArray(dataParticipaciones)) {
-      // Extraemos los IDs de las promociones donde participa
       const ids = dataParticipaciones.map(p => p.promocion);
       setJoinedPromoIds(ids);
     }
@@ -48,7 +44,6 @@ function PromocionesJugador() {
       alert(res.detail || "Error al unirse a la promoción.");
     } else {
       alert("¡Te has unido correctamente! Disfruta de tus ventajas.");
-      // Recargar datos para actualizar botón
       cargarDatos();
     }
   };

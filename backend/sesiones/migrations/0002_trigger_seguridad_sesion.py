@@ -13,7 +13,6 @@ def load_sql_from_file(filename):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Split by the / delimiter used in Oracle scripts
     statements = re.split(r'\n/\s*(?:\n|$)', content)
     statements = [stmt.strip() for stmt in statements if stmt.strip()]
     return statements

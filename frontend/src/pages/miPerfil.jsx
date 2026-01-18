@@ -10,8 +10,7 @@ function MiPerfil() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    // Obtenemos el usuario del localStorage o de una llamada API "me"
-    // Como no tenemos endpoint "me", usamos el localStorage y refrescamos datos
+
     useEffect(() => {
         const stored = localStorage.getItem('casino_usuario');
         if (stored) {
@@ -24,14 +23,11 @@ function MiPerfil() {
 
     const fetchUserData = async (dni) => {
         try {
-            // Asumimos que podemos hacer GET de nuestro propio usuario
-            // Si la API bloquea listar ID específico, usamos lo del localStorage
-            // Pero lo ideal es refrescar cartera etc.
+
             const data = await getData(`usuarios/jugadores/${dni}/`);
             if (data && data.dni) {
                 setUsuario(data);
             } else {
-                // Si falla (ej: 404), usar local
                 setUsuario(JSON.parse(localStorage.getItem('casino_usuario')));
             }
         } catch (err) {
@@ -56,11 +52,10 @@ function MiPerfil() {
                 mensaje_confirmacion: bajaData.confirmacion
             });
 
-            // La respuesta puede ser { message: "Baja realizada..." } o error
             if (response && response.mensaje) {
                 alert("Tu cuenta ha sido dada de baja. Hasta pronto.");
                 localStorage.removeItem('casino_usuario');
-                window.location.href = '/login'; // Force reload/redirect
+                window.location.href = '/login';
             } else {
                 setError(response.error || 'Error al procesar la baja. Verifica tu contraseña.');
             }
