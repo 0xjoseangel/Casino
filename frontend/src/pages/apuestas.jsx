@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getData, postData } from '../services/api';
 
 function Apuestas() {
+  const idDesdeUrl = new URLSearchParams(window.location.search).get('juegoId');
   const [apuestas, setApuestas] = useState([]);
   const [juegos, setJuegos] = useState([]);
   const [jugadoresList, setJugadoresList] = useState([]); // Lista para el dropdown de admin
@@ -18,7 +19,7 @@ function Apuestas() {
   const [sesionData, setSesionData] = useState(null);
 
   const [form, setForm] = useState({
-    juego: '',
+    juego: idDesdeUrl || '',
     cantidad_apostada: ''
   });
 

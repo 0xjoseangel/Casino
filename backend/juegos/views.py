@@ -12,11 +12,7 @@ class JuegoViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        """
-        Lógica de filtrado:
-        - Si es una acción de edición (PUT/PATCH/DELETE), permitimos todo.
-        - Si es la lista general, filtramos por estado activo a menos que sea admin.
-        """
+       
         if self.action != 'list':
             return Juego.objects.all()
             

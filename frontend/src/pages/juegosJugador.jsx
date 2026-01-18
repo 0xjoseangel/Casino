@@ -8,16 +8,16 @@ const JuegosJugador = () => {
     const [orden, setOrden] = useState('nombre');
     const navigate = useNavigate();
 
-    // Paleta de colores Luxury Casino
+    
     const colores = {
         fondo: '#0a0a0a',
         tarjeta: '#141414',
         dorado: '#d4af37',
-        neon: '#ff00de',
+        neon: '#B71C1C',
         texto: '#ffffff'
     };
 
-    // Imágenes de Casino Profesional (Sin Parchís)
+    
     const obtenerImagenDefecto = (tipo) => {
         switch (tipo) {
             case 'tragaperras':
