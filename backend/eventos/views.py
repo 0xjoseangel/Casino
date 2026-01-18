@@ -3,7 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.utils import timezone
+from django.db import transaction
 from .models import Promocion, Torneo, Participa, Compite
+from usuarios.models import Jugador
 from .serializers import (
     PromocionSerializer, TorneoSerializer,
     ParticipaSerializer, CompiteSerializer
@@ -252,4 +254,24 @@ class CompiteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        return super().create(request, *args, **kwargs)
+        # Obtener el jugador y verificar saldo suficiente
+        try:
+            jugador = Jugador.objects.get(pk=jugador_dni)
+        except Jugador.DoesNotExist:
+            return Response(
+                {'error': 'El jugador no existe'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        precio = torneo.precio_inscripcion
+        if jugador.cartera_monetaria < precio:
+            return Response(
+                {'error': f'Saldo insuficiente. Necesitas {precio}€ y tienes {jugador.cartera_monetaria}€'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Cobrar la inscripción y crear la relación en una transacción atómica
+        with transaction.atomic():
+            jugador.cartera_monetaria -= int(precio)
+            jugador.save()
+            return super().create(request, *args, **kwargs)
